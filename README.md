@@ -1,251 +1,279 @@
+<div align="center">
+
 # prose-sanitiser
 
-A deterministic AI-provenance sanitiser and prose linter, in Rust.
+### Deterministic AI-provenance sanitiser and prose linter, in Rust
+
+[![Licence](https://img.shields.io/badge/Licence-MIT%20OR%20Apache--2.0-blue?style=flat-square)](LICENSE-MIT)
+[![crates.io](https://img.shields.io/crates/v/prose-sanitiser?style=flat-square)](https://crates.io/crates/prose-sanitiser)
+[![CI](https://img.shields.io/github/actions/workflow/status/DreamLab-AI/prose-sanitiser/ci.yml?style=flat-square)](https://github.com/DreamLab-AI/prose-sanitiser/actions)
+
+</div>
+
+---
+
+## What is prose-sanitiser?
 
 Two jobs. Make prose read as though a competent human with opinions decided
 every word of it. Make the files that carry it clean of the provenance metadata
 and invisible-Unicode contraband a machine can read.
 
-The distinguishing claim is the combination: deterministic slop detection, plus
-lossless verifiable provenance surgery, plus sense-aware UK English. Each of
-those exists separately. Together they do not, and the technical provenance
-layer in particular is untouched by the deslop tooling that exists.
+What sets it apart is the combination: deterministic invisible-Unicode
+surgery (including decoded smuggled payloads), lossless container-level
+provenance stripping (EXIF, XMP, C2PA, OOXML revision IDs, PDF incremental
+updates), sense-aware UK-English enforcement built on VarCon rather than a flat
+word list, and versioned, confidence-tiered AI writing-tell tables whose
+measured performance is published alongside the rules. Each of those exists
+separately. Together they do not.
 
-## The honest capability matrix
+Everything runs in-process, with no model, no network and no external tools on
+the default path. Every decision is either a codepoint classification or a
+container-structure deletion, so a strip is verifiable by diffing the output.
+The `sanitise` binary runs every layer over a file or tree in one pass,
+reporting in SARIF 2.1.0, JSON Lines, JSON or plain text.
 
-This table is the contract. Nothing outside the first block should appear in a
-crate description, a README or a `--help`.
+What it cannot do is stated in this README
+rather than buried in a footnote. Statistical sampling watermarks (Claude's own, since 2 August 2026, and others) need the vendor key to detect or remove.
+Pixel-domain image watermarks need a proprietary decoder. Slop rules are a
+style linter with an evidence base, not a detector: on general-domain corpora
+they separate human from machine text barely better than chance at a usable
+operating point, and the numbers are below.
 
-### Detects and strips losslessly, verifiable by diff
+## Where prose-sanitiser sits in the ecosystem
 
-| Capability | Basis |
-|---|---|
-| Invisible `Cf`-class controls: zero-width family, tag block, variation selectors, bidi controls, Hangul fillers | Deterministic codepoint classification with context rules |
-| Exotic whitespace (`U+00A0`, `U+202F`). **Detected always; the fold to `U+0020` is opt-in** | Orthographically load-bearing, so reported rather than rewritten |
-| Variation-selector and tag-block smuggled payloads, **including decoding the hidden bytes** | The byte mapping is fully specified |
-| Homoglyph and mixed-script substitution. **Detected always; the fold to ASCII is opt-in** (`--aggressive-homoglyphs`) | UTS #39 skeleton and restriction levels |
-| C2PA JUMBF manifests in JPEG `APP11`, PNG `caBX`, WebP `C2PA`, PDF embedded files, SVG `c2pa:manifest` | Container structure is normatively specified; deletion is byte-level |
-| EXIF, XMP (including Extended XMP), IPTC/Photoshop IRB, PNG text chunks, `tIME`, GIF comments | Well-delimited container structures |
-| PDF `/Info` and `/Metadata`, with a full object-graph rewrite so prior incremental revisions do not survive | Structural rewrite |
-| OOXML `docProps/*.xml`, `word/comments.xml`, `w:ins`/`w:del`, `rsid`; ODF `meta.xml` | ZIP part deletion, compression and entry order preserved |
+prose-sanitiser is one component of
+**[VisionFlow](https://github.com/DreamLab-AI/VisionFlow)**, a federated
+human-AI mesh. It was extracted from agentbox (the sovereign agent runtime) into
+its own repository for independent publication on crates.io.
 
-### Detects and reports, but never claims to strip
+| Sibling | Relationship |
+|:--------|:-------------|
+| [agentbox](https://github.com/DreamLab-AI/agentbox) | Consumes the binaries via a pinned Nix derivation and the `prose-sanitiser` skill. The SARIF output feeds agentbox's code-scanning surface |
+| [loom](https://github.com/DreamLab-AI/loom) | Uses the evaluator's measurement-and-disclosure style as a model for its own benchmark presentation |
+| [VisionFlow](https://github.com/DreamLab-AI/VisionFlow) | Ecosystem canon; the maturity vocabulary and ADR registry that govern this crate's publication |
 
-| Capability | Why |
-|---|---|
-| Statistical sampling watermarks (SynthID-Text, Kirchenbauer, Aaronson, and Claude's own mark since 2 August 2026) | Detection requires the vendor key |
-| Pixel-domain image watermarks (SynthID-Image, Stable Signature, Tree-Ring, TrustMark, StegaStamp) | Each needs a proprietary trained decoder or diffusion inversion |
-| Durable Content Credentials (C2PA soft binding plus a cloud repository) | The tool cannot know whether a soft binding exists |
-| AI stylistic tells: lexical, structural, narrative | Heuristic, not forensic. Population-level evidence only |
+## Architecture
 
-### Degrades, never removes
+### Crate table
 
-Paraphrase changes tokens, which degrades any sampling watermark as a side
-effect. It is lossy, cannot be verified without the vendor key, and is not
-removal. No lossless, token-preserving removal exists anywhere in the
-literature.
+| Crate | Role | Published |
+|:------|:-----|:----------|
+| `prose-sanitiser-core` | Shared types: `Finding`, `Span`, `Patch`, `Severity`, `ConfidenceTier`, `Fixability`, the `Check`/`Fix` traits. No I/O, no subprocesses | Candidate |
+| `prose-sanitiser-unicode` | Layer A: invisible-Unicode classification, UTS #39 homoglyph detection, payload decoding, bidi policy | Candidate |
+| `prose-sanitiser-uk` | VarCon-backed UK-English enforcement with CommonMark span exclusion and sense disambiguation | Candidate |
+| `prose-sanitiser-slop` | Versioned, confidence-tiered AI writing-tell rule tables and scanners | Candidate |
+| `prose-sanitiser-media` | Image and container provenance surgery (PNG, JPEG, WebP, PDF, OOXML, ODF, SVG) | Not first wave |
+| `prose-sanitiser` (cli) | The `sanitise` umbrella binary, the eleven task binaries, audit sweeps and the rewrite layer | Workspace |
+| `prose-sanitiser-server` | HTTP service (axum). Not published | No |
 
-### The principle behind the rows
+### Three axes
 
-**Detection is unconditional; mutation is gated separately.** Every rule has two
-switches, not one: whether the finding exists, and whether it carries a repair.
-Contraband is always reported. Whether the tool then rewrites it is a policy
-question with its own default, so "tell me but do not touch it" is always a
-position you can take.
-
-Which mutations are on by default:
-
-| Carrier | Reported | Rewritten by default | Switch |
-|---|---|---|---|
-| Zero-width family, tag block, variation selectors, Hangul fillers | Always | Yes. They are contraband with no legitimate reading | |
-| Exotic whitespace (`U+00A0`, `U+202F`, the rest) | Always. `U+202F` is a documented GPT-4o-class artefact, so surfacing it is the point | **No.** A no-break space is load-bearing typography: it holds *10 km* and *Figure 3* together, and French orthography requires one before `;` `:` `!` `?`. Alone among the rewrites here, a diff cannot show the change, because both characters render as a space | `normalize_spaces` |
-| Homoglyphs and mixed script | Always, and the advice names the ASCII it is confusable with | **No.** Folding rewrites letters inside words, and would destroy a security note quoting an attack string verbatim | `--aggressive-homoglyphs` |
-| `U+00AD` soft hyphen | Always | **No.** A typesetter's hyphenation hint as often as a carrier, and nothing in the codepoint says which | `strip_soft_hyphen` |
-| Load-bearing invisibles: emoji ZWJ glue, Indic and Persian joiners, flag tags | **No.** They are not contraband | Never | `--strip-emoji-glue`, for auditing a document you already distrust |
-
-
-`TextPolicy` mirrors `CleanOptions` field for field, defaults included, so
-`check_text` is a truthful preview of `clean_text`: applying the edits the check
-offers reproduces the clean's output exactly. That is asserted as an invariant
-rather than left to convention, because the two surfaces drifted apart three
-times before it was.
-
-### Never touches
-
-`U+200D` inside a well-formed RGI emoji ZWJ sequence; `Mn`/`Mc` combining marks;
-ZWNJ/ZWJ after an Indic virama or between Persian morphemes; balanced bidi
-controls in genuine RTL prose; `U+FEFF` at byte offset 0; `U+00AD` soft hyphen,
-which is a hyphenation hint as often as a carrier, so it is reported and
-stripped only on request; content inside code fences, inline code, HTML attributes, URLs, file paths or front matter; US
-spelling in proper nouns, organisation names and direct quotations;
-sense-dependent pairs such as `program`, `meter`, `disk`, `sulfur`, `fetus` and
-`dialog box`; the pixel data of any image, on the default path (see the scope note
-below); NFKC normalisation of user-facing prose.
-
-### What "lossless" and "never touches pixels" are scoped to
-
-Both claims describe **the default path: a container-only operation that
-succeeds, with pixel removal disabled.** They are not claims about every code
-path the tool can be asked to take. One path is outside the scope by design:
-
-- `clean-image --remove-pixel ctrlregen|diffusion` hands the file to a diffusion
-  harness that **rewrites pixels deliberately**. That is the point of the flag.
-  It is lossy, it is off by default, and nothing about it is verifiable by diff.
-
-A clean `inspect-text`, `inspect-file` or `inspect-image` report is **evidence
-that no known embedded carrier remains. It is not proof of anonymity, and not
-proof that provenance was completely removed.** It says nothing about a
-statistical sampling watermark in the text, a pixel-domain watermark in the
-image, or a C2PA soft binding that lets a validator retrieve the original signed
-manifest from a cloud repository after the local one is gone.
-
-## Three axes
-
-Conflating any two of these produces a specific bug, so they are kept separate
-and `prose-sanitiser-core` enforces the separation in the type system.
+Conflating any two produces a specific bug, so they are kept separate and
+`prose-sanitiser-core` enforces the separation in the type system.
 
 | Axis | Answers | Values |
-|---|---|---|
+|:-----|:--------|:-------|
 | `Severity` | How much does it matter? | `High`, `Medium`, `Low` |
 | `ConfidenceTier` | Is the pattern right? | `CertainMechanical`, `HighConfidenceStylistic`, `LowConfidenceJudgement` |
 | `Fixability` | Can it be repaired at all? | `Mechanical`, `OptIn`, `ReportOnly`, `NoFixExists` |
 
-Fixability derives from the tier by default, so a rule states it only when it
-differs, and it says so in a side table (`Config::with_fixability_table`, fed by
-`sanitise::FIXABILITY_OVERRIDES`) rather than by bending its tier. SARIF carries
-all three axes per result, plus `properties.noFixExplanation` where no repair is
-possible, because "we will not repair this" and "this cannot be repaired" are
-different messages. One case forced the axis into existence: `media-c2pa-soft-binding` is a
-*certain* detection with **no possible fix**, because the watermark is in the
-pixels and out of reach of container surgery. Filing that as a low-confidence
-judgement to stop it being auto-fixed put the crate's strongest evidence behind
-its weakest label, in the very field a reader consults to decide how far to
-trust a detection.
+### Law
 
-| Tier | Contents | Fix |
-|---|---|---|
-| `certain-mechanical` | Invisible Unicode, container metadata, homoglyphs, exotic whitespace | Applied by `--fix`, unless the rule declares `NoFixExists`. The tier rates the *classification*, so a conservative default can still withhold the edit behind a flag |
-| `high-confidence-stylistic` | Unconditional dialect pairs, always-ise and always-yse sets | Only behind an explicit `--write` |
-| `low-confidence-judgement` | Sense-dependent pairs, slop phrasing, organisation-adjacent tokens | Never. Report only |
+**Detection is unconditional; mutation is gated separately.** Every rule has two
+switches: whether the finding exists, and whether it carries a repair.
+Contraband is always reported. Whether the tool rewrites it is a policy question
+with its own default, so "tell me but do not touch it" is always available.
 
-**Conservatism belongs in the default, never in the tier.** Downgrading a
-mechanical classification to buy safe behaviour would make the tier lie about
-the evidence, and would break the fix path for a caller who explicitly asked to
-apply it, since a judgement-tier finding is never fixable even under `--write`:
-their `to_edit` returns `None` and the patch silently stops matching what the
-cleaner does. Conservatism lives in the default, as a flag the caller can turn
-on. Full reasoning in [crates/core/README.md](crates/core/README.md).
+### Capability matrix
 
-## Workspace layout
+As of 2026-09-03. Taken from the research brief, section B.
 
-| Crate | Role | Published |
-|---|---|---|
-| [`prose-sanitiser-core`](crates/core) | Shared types: `Finding`, `Span`, `Patch`, `Severity`, `ConfidenceTier`, the `Check`/`Fix` traits. No I/O, no subprocesses | Candidate |
-| [`prose-sanitiser-unicode`](crates/unicode) | Layer A: classification, UTS #39, payload decoding | Candidate |
-| [`prose-sanitiser-uk`](crates/uk) | VarCon-backed UK English with span exclusion and sense disambiguation | Candidate |
-| [`prose-sanitiser-slop`](crates/slop) | Versioned, confidence-tiered AI-tell rule tables | Candidate |
-| [`prose-sanitiser-media`](crates/media) | Image and container provenance surgery | Not first wave |
-| [`prose-sanitiser`](crates/cli) | The `sanitise` umbrella, the CLI binaries, audit sweeps and rewrite layer | Workspace |
-| [`prose-sanitiser-server`](crates/server) | The HTTP service | No |
+| Block | Contents |
+|:------|:---------|
+| **Detects and strips losslessly** (verifiable by diff) | Invisible Cf-class controls (zero-width family, tag block, variation selectors, Hangul fillers). Exotic whitespace (reported always; fold to U+0020 is opt-in). Variation-selector and tag-block smuggled payloads, including decoding the hidden bytes. Homoglyph and mixed-script substitution (reported always; fold to ASCII is opt-in). C2PA JUMBF manifests in JPEG, PNG, WebP, PDF, SVG. EXIF, XMP, IPTC, PNG text chunks. PDF `/Info` and `/Metadata` with full object-graph rewrite. OOXML `docProps`, tracked changes, `rsid`; ODF `meta.xml` |
+| **Detects and reports only** | Statistical sampling watermarks (SynthID-Text, Kirchenbauer, Aaronson, Claude's own mark). Pixel-domain image watermarks. Durable Content Credentials (C2PA soft binding). AI stylistic tells: lexical, structural, narrative |
+| **Degrades, never removes** | Paraphrase changes tokens, which degrades any sampling watermark as a side effect. Lossy, unverifiable, not removal |
+| **Never touches** | Emoji ZWJ glue, Indic/Persian joiners, balanced bidi in RTL prose, BOM at offset 0, soft hyphen (reported; strip is opt-in). Code fences, inline code, URLs, file paths, front matter. US spelling in proper nouns and direct quotations. Sense-dependent pairs (program, meter, sulfur, dialog box). Pixel data (on the default path) |
 
-The split is licence and dependency hygiene. `core`, `unicode`, `uk` and `slop`
-are pure Rust with no C dependencies, no subprocesses and no network, which is
-the part worth publishing. `media` pulls the heavier tree.
+## Quickstart
 
-## Library shape
+### Install
 
-A config builder, `check(&Document) -> Vec<Finding>` that never mutates, and a
-separate `fix(&Document, &[Finding]) -> Patch` returning an applyable diff. That
-one core then serves the CLI, an editor language server (findings as code
-actions) and the SARIF exporter without any of them reimplementing a rule.
+```sh
+# From source (needs Rust 1.85+):
+cargo install prose-sanitiser
 
-A fix is represented as data, never as pre-applied text.
+# Or grab a prebuilt binary from the GitHub release:
+# https://github.com/DreamLab-AI/prose-sanitiser/releases
+```
+
+### `sanitise` umbrella
+
+```sh
+# Review a Markdown draft for everything, human-readable output:
+sanitise draft.md
+
+# Same, as SARIF for GitHub code scanning:
+sanitise --format sarif draft.md > report.sarif
+
+# Apply the safe fixes (invisible Unicode, metadata):
+sanitise --fix draft.md
+
+# Also apply the high-confidence-stylistic fixes (UK spelling):
+sanitise --write draft.md
+
+# Preview what --write would change, without touching the file:
+sanitise --diff draft.md
+```
+
+Exit codes: **0** clean, **1** findings reported, **2** tool error (bad
+arguments, unreadable input, failed write).
+
+### Worked examples
+
+**De-slop a Markdown draft:**
+
+```sh
+sanitise --format text essay.md
+# essay.md:3:15 tier1-vocab [low] "delve" is a Tier-1 AI lexical marker
+# essay.md:7:1  us-spelling [high] "optimize" -> "optimise"
+# exit 1
+
+sanitise --write essay.md
+# Applies us-spelling fixes; slop findings are report-only, never applied.
+```
+
+**Strip provenance from an image:**
+
+```sh
+inspect-image photo.jpg          # shows EXIF, XMP, C2PA manifest
+clean-image photo.jpg            # writes photo.cleaned.jpg, pixels untouched
+clean-image --in-place photo.jpg # overwrites (writes .bak first)
+```
+
+**Strip provenance from a .docx:**
+
+```sh
+inspect-file report.docx         # shows docProps, tracked changes, rsid
+clean-file report.docx           # writes report.cleaned.docx
+```
+
+**Review without rewriting:**
+
+```sh
+sanitise draft.md                # exit 1 if anything found, nothing changed
+sanitise --format jsonl draft.md # one JSON object per finding, for scripting
+```
 
 ## Measured
 
-A capability matrix is a claim until someone counts. Measured September 2026:
+A capability matrix is a claim until someone counts. Measured 2026-09-03
+against ruleset **2026.09.03**, using the `ps-eval` harness over RAID (MIT),
+MAGE (Apache-2.0), LLM-DetectAIve (CC BY-SA 4.0), and a 2,000-document British
+prose set (Hansard, GOV.UK, Project Gutenberg; 1.2M words, all pre-2022).
 
-| What | Result |
-|---|---|
-| Homoglyph detection, SilverSpeak fixtures at 5, 10 and 20 per cent substitution | Precision 1.0000, recall 1.0000 |
-| Legitimate-Unicode controls: emoji ZWJ, Devanagari, Persian, Hebrew-Latin, BOM, the three subdivision flags | Zero strips, byte-identical round trip |
-| Container surgery, PNG/JPEG/WebP with no provenance marks | SHA-256 byte-identical; images pixel-exact, with the compressed `IDAT` and entropy-coded scan carried across verbatim |
-| PDF metadata written by an incremental update | No recoverable original `/Info` anywhere in the output byte stream |
-| UK English, the trap set (*gas meter*, *to license a doctor*, *World Health Organization*, *sulfur dioxide*, *dialog box*) | Zero findings, in both `-ise` and Oxford mode |
-| UK English, 2,000 British documents and 1.2M words (Hansard, GOV.UK, Gutenberg) | `us-spelling` flags 5.60% of documents (0.097 per 1,000 words), `us-spelling-sense` 8.15%. **Not one finding was auto-fixed** |
+### Fixtures
 
-The last row is the one worth having, and the column that matters in it is the
-last one. Every finding on that corpus is a false positive by construction, since
-the text is human-written British English, and across 1.2 million words **nothing
-was auto-fixed**. The worst case on British prose is noise in a report, never a
-corrupted document.
+35 of 35 fixtures pass. 0 of 9 legitimate-Unicode false positives.
 
-The 5.60 per cent is an upper bound rather than a count: a Hansard debate quoting
-an American witness, a GOV.UK page naming *World Health Organization*, or a
-Gutenberg text with an American imprint all contain genuine American spellings
-the rule is right to notice. Roughly one flagged document in eighteen, against
-the **61.3 per cent** false-positive rate seven commercial detectors showed on
-TOEFL essays (Liang et al. 2023, *Patterns*). No published study measured
-detector or linter false positives on British English before this, which is why
-the crate produced the number rather than citing one.
+### Invisible-Unicode and homoglyph recall
 
-Two things are deliberately *not* claimed. A clean scan is not evidence of human
-authorship. And the slop rules report TPR at 1 per cent FPR rather than AUROC,
-because high AUROC routinely coexists with a near-zero true-positive rate at the
-thresholds any real deployment needs.
+On the RAID adversarial splits (1,000 homoglyph-injected, 1,000 zero-width-space-injected documents):
 
-## Building and testing
+- **Homoglyph recall: 1.0000** (1,000/1,000). Precision 0.9804 (the 20 "false positives" on unattacked text are real no-break spaces and soft hyphens the corpus does not label).
+- **Zero-width-space recall: 1.0000** (1,000/1,000). Same precision.
 
-```bash
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
-cargo fmt --check
-cargo doc --workspace --no-deps
-```
+### UK-English false positives on British prose
 
-## Licence
+2,000 documents of known-good British English. Every finding is a false positive
+by construction.
 
-**MIT OR Apache-2.0**, at your option, per
-[ADR-2030](../../docs/adr/ADR-2030-permissive-licensing-for-publishable-service-crates.md)
-(2026-09-03, accepted). `LICENSE-MIT` and `LICENSE-APACHE` are at this workspace
-root and linked into every crate, so the grant travels with the crate on
-crates.io.
+- `us-spelling` flags **5.6% of documents** (0.10 per 1,000 words). Upper bound,
+  not a count: spot-checked tokens are genuine Americanisms in quoted American
+  sources and nineteenth-century Gutenberg text.
+- With `--write`, **116 edits** were applied across 1.2M words, all from
+  `us-spelling`, all genuine Americanisms. No other rule was write-eligible.
+  Zero documents were corrupted.
+- For comparison: seven commercial AI detectors showed a **61.3%** false-positive
+  rate on TOEFL essays (Liang et al. 2023, *Patterns*). No published study
+  measured linter false positives on British English before this.
 
-The containing repository stays **AGPL-3.0-only** under its root `LICENSE`, and
-that is not a contradiction: an AGPL repository may hold permissively licensed
-subtrees, because the AGPL governs the aggregate hosted service rather than the
-licence of each part. The permissive grant here is per crate. ADR-2030 amends
-ADR-016's uniformly-AGPL statement for `services/` and supersedes the earlier
-note in this file that recorded the two grants as an open conflict.
+### Slop rules: TPR at 1% FPR
 
-One condition rides with it: a `services/` crate that links an AGPL library is
-not permissive in effect and must declare `AGPL-3.0-only` rather than advertise a
-grant it cannot give. That applies to `nostr-pod-bridge` today, not to anything
-in this workspace, and adding an AGPL dependency to any crate here would be a
-licence change needing ADR-2030 re-reviewed.
+Reported as true-positive rate at a fixed 1% false-positive rate, never AUROC.
 
-Dependency licences are kept clean deliberately. Avoided: `rexiv2` (GPL-3.0),
-`mupdf-rs` (AGPL-3.0), LibreOffice en_GB Hunspell dictionaries (GPL/LGPL/MPL
-tri-licensed), LanguageTool rules (LGPL, reference only), `spellbook` (MPL-2.0,
-usable as a dependency but not vendorable). Wikipedia-derived word lists are
-fine as *facts*; the article prose is CC BY-SA and is not copied.
+| Corpus | Score | TPR at 1% FPR |
+|:-------|:------|:--------------|
+| RAID (unattacked) | raw slop_score | **2.8%** |
+| RAID (unattacked) | per 1,000 words | **3.4%** |
+| MAGE | raw slop_score | **0.9%** |
+| MAGE | per 1,000 words | **1.7%** |
+| LLM-DetectAIve (n=20 per class) | per 1,000 words | **50.0%** |
 
-Vendored VarCon data keeps its own permissive notice in
-[`crates/uk/data/LICENSE-VarCon`](crates/uk/data/LICENSE-VarCon).
+**Read that plainly.** On general-domain corpora the aggregate slop score
+separates human from machine text barely better than chance at a usable
+operating point. LLM-DetectAIve looks strong, but n is 20 per class and
+the corpus is deliberately composed of heavily marked machine text, so it is an
+illustration, not a result. This crate is a **style linter with an evidence
+base**, not a detector.
 
-## Ethics
+## What it does not do
 
-Legitimate editing improves a text and enforces a house style regardless of who
-or what drafted it. Evasion targets a specific detector's signature. This
-project markets itself on the first and refuses to market itself on
-detector-defeat metrics.
+Three statements that appeared in the original Python tool were withdrawn rather
+than softened, because publishing them would have been false claims:
 
-Under EU AI Act Article 50(4), AI-generated text that underwent genuine human
-editorial review, with a named person holding editorial responsibility, is
-exempt from the marking duty. Supporting that review is a lawful and disclosed
-workflow, and it is what this tool is for.
+1. **Statistical sampling watermarks are not something the tool strips.** It
+   cannot, and no third party can without the vendor key. Paraphrase degrades a
+   sampling watermark as a side effect of changing tokens; that is lossy and
+   unverifiable.
+2. **"Proving the mark was cleared in a closed loop"** was a claim about
+   self-applied marks with known keys (the MarkLLM harness). It says nothing
+   about a vendor's production watermark.
+3. **Pixel-domain watermark removal is not a capability.** It depends on an
+   external GPU harness, it is itself detectable at over 98% TPR at 1% FPR, and
+   stripping a container manifest does not defeat a durable Content Credential.
+
+prose-sanitiser does not detect authorship. A clean scan is not evidence of
+human writing. A dirty one is not evidence of a model. A finding is a prompt
+for an editor to look, never a verdict.
 
 ## Documentation
 
-The user-facing workflow, the editorial method and the full reference
-catalogues live in the agentbox skill at `skills/prose-sanitiser/`.
+- Crate READMEs: [core](crates/core/README.md), [unicode](crates/unicode/README.md), [uk](crates/uk/README.md), [slop](crates/slop/README.md), [media](crates/media/README.md)
+- [Research brief (2026-09-03)](docs/prose-sanitiser-research-2026-09-03.md)
+- Review records: [adversarial pass 1](docs/prose-sanitiser-codex-review-2026-09-03.md), [pass 2](docs/prose-sanitiser-codex-review-2-2026-09-03.md), [external static review](docs/prose-sanitiser-external-review-2026-09-03.md)
+- [Releasing](RELEASE.md)
+- [CHANGELOG](CHANGELOG.md)
+- [CLI quick reference](README-CLI.md)
+
+## Status
+
+As of 2026-09-03. Three review passes are complete ahead of the first
+crates.io publication: two adversarial passes by an independent model
+(`docs/prose-sanitiser-codex-review-*.md`) and one external static review
+(`docs/prose-sanitiser-external-review-2026-09-03.md`), with every live
+finding fixed and tested. The workspace carries 747 tests, `cargo clippy
+-D warnings` is clean, and 35 of 35 evaluation fixtures pass. Anything not
+covered by the fixture suite or the numbers above should still be treated as
+provisional; deferred items are listed at the end of the review records.
+
+Crates `core`, `unicode`, `uk` and `slop` are publication candidates:
+pure Rust, no C dependencies, no subprocesses, no network, every public item
+documented, `cargo doc --no-deps` clean. `media` pulls a heavier dependency tree
+and is published with the CLI as a second wave. `server` is internal.
+
+Rule tables are dated and versioned (`RULESET_VERSION 2026.09.03`). Every
+rule carries `since`, `reviewed` and its sources, so a table nobody has
+re-checked is visible as data rather than silently rotting. Structural
+measures include two that do not work (paragraph-length CV, tricolon rate) and
+one that inverts between corpora (Oxford-comma density). They are kept as
+house-style budgets and labelled accordingly.
+
+## Licence
+
+**MIT OR Apache-2.0**, at your option.
+
+Copyright (c) 2026 DreamLab AI Consulting Ltd and contributors.
+
+Vendored VarCon data (in `prose-sanitiser-uk`) keeps its own permissive notice;
+see `crates/uk/data/LICENSE-VarCon`.

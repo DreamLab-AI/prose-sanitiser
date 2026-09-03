@@ -96,7 +96,7 @@ pub fn safe_arg(path: &str) -> String {
 
 /// Hard cap on captured stdout and stderr individually, to stop a malicious
 /// child from exhausting host memory through pipe output.
-const MAX_OUTPUT_BYTES: usize = 64 << 20; // 64 MiB
+pub const MAX_OUTPUT_BYTES: usize = 64 << 20; // 64 MiB
 
 /// Why a child run did not produce output.
 #[derive(Debug)]
