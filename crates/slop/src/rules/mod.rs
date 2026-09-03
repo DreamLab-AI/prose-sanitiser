@@ -242,7 +242,10 @@ pub const FIXABILITY: &[(&str, Fixability)] = &[
     ("bold-label-bullet", Fixability::ReportOnly),
     ("structural-emdash-density", Fixability::ReportOnly),
     ("structural-oxford-comma-density", Fixability::ReportOnly),
-    ("structural-negative-parallelism-density", Fixability::ReportOnly),
+    (
+        "structural-negative-parallelism-density",
+        Fixability::ReportOnly,
+    ),
 ];
 
 /// The whole-file aggregate checks the default scan performs.

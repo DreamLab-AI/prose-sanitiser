@@ -19,7 +19,7 @@ pub struct CharHit {
     /// How many times it occurred.
     pub count: usize,
     /// strip | bidi | tag_chars | variation_selector | zwj_family | private_use
-    /// | space | confusable | other_cf
+    /// | reserved_ignorable | noncharacter | space | confusable | other_cf
     pub kind: &'static str,
     /// Character offsets, capped at ten.
     pub samples: Vec<usize>,

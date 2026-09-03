@@ -29,8 +29,11 @@ impl Rng {
         self.0 >> 33
     }
 
-    fn pick<'a, T>(&mut self, items: &'a [T]) -> &'a T {
-        &items[self.next() as usize % items.len()]
+    /// Returns the item by value: the tables hold `&str`, and returning `&T`
+    /// let older compilers (rustc < 1.97) infer `T = str` from a `push_str`
+    /// call site and fail to build the tests on the declared MSRV.
+    fn pick<T: Copy>(&mut self, items: &[T]) -> T {
+        items[self.next() as usize % items.len()]
     }
 }
 

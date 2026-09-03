@@ -247,7 +247,14 @@ const VERB_READINGS: &[&str] = &[
 fn the_noun_reading_of_practice_is_silent() {
     for sentence in NOUN_READINGS {
         assert_eq!(
-            verdict(sentence, if sentence.contains("practices") { "practices" } else { "practice" }),
+            verdict(
+                sentence,
+                if sentence.contains("practices") {
+                    "practices"
+                } else {
+                    "practice"
+                }
+            ),
             Verdict::CorrectAsWritten,
             "reported a noun reading: {sentence:?}"
         );
@@ -301,7 +308,10 @@ fn the_noun_default_cannot_reach_licence_or_programme() {
 fn a_determiner_still_outranks_a_content_word() {
     // The immediate-token reading must not have cost the determiner rule its
     // effect: "a licence" is a noun by determiner, "to license" a verb by "to".
-    assert!(suggests(&verdict("He has a license.", "license"), "licence"));
+    assert!(suggests(
+        &verdict("He has a license.", "license"),
+        "licence"
+    ));
     assert_eq!(
         verdict("The board voted to license a doctor.", "license"),
         Verdict::CorrectAsWritten

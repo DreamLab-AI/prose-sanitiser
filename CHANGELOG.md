@@ -253,6 +253,52 @@ The capability matrix stopped being a claim and started being a number.
   No published study measured detector or linter false positives on British
   English before this.
 
+## [0.1.1] - 2026-09-03
+
+A correctness and portability release: 0.1.0 built and tested only on the
+toolchain it was written on. Layer A also absorbs three invisible-carrier
+classes that the upstream watermarks-remover project (v0.6.0) covers and this
+port did not; see `docs/UPSTREAM-DELTA.md` for the full comparison.
+
+### Fixed
+
+- **Declared MSRV was false.** `rust-version` said 1.85 while `aes` 0.9 needs
+  1.89 and `c2pa` 0.90, `darling` 0.23 and the `icu` crates need 1.88. Now 1.89,
+  verified by compiling every test binary on rustc 1.89.0, and enforced by a
+  CI job that reads the field and builds on exactly that toolchain.
+- **The uk property tests did not compile on rustc 1.95.** `Rng::pick` returned
+  `&T` and older inference bound `T = str` from the `push_str` call sites.
+  It returns `T: Copy` by value now. Found by the agentbox Nix build.
+- **Non-glibc targets did not build.** `set_rlimit` typed its resource as
+  `u32`, glibc's unsigned typedef; musl and Darwin declare `c_int`. The
+  parameter is `c_int` with `as _` casts at the boundary, so the four release
+  targets (x86_64 and aarch64, musl and Darwin) compile again.
+
+### Added
+
+- **Reserved `Default_Ignorable` code points** (`reserved_ignorable`): U+2065,
+  U+FFF0..FFF8, U+E0000, U+E0080..E00FF, U+E01F0..E0FFF. Category `Cn` with
+  `Other_Default_Ignorable_Code_Point=Yes`: a renderer draws nothing and a
+  `Cf` catch-all never sees them. Stripped everywhere.
+- **All 66 noncharacters** (`noncharacter`): U+FDD0..FDEF and U+xFFFE/U+xFFFF
+  on every plane. Stripped everywhere; the plane-final pair is classified
+  ahead of the private-use test so it is not misreported.
+- **Blank-rendering carriers outside `Cf`**: U+180F MONGOLIAN FVS4 (`Mn`),
+  U+3164 HANGUL FILLER and U+FFA0 HALFWIDTH HANGUL FILLER (`Lo`). Kept only
+  after a letter of their own script or presentation form, like FVS1-3 and the
+  conjoining fillers; stripped elsewhere.
+- **Layout format controls kept in context**: Egyptian quadrat controls,
+  Duployan overlap controls and musical beam/tie/slur controls are `Cf` but
+  visibly govern their own script, so the catch-all was corrupting rendered
+  text. Kept after their own script, stripped when floating between unrelated
+  text; paranoid mode still strips them.
+- **Bounded inflate for PNG `zTXt`/`iTXt`.** A compressed text chunk hides its
+  markers from the raw scan, so it is inflated under a 1 MiB per-chunk and
+  8 MiB per-file budget; an over-long stream is refused, never truncated into
+  a false negative. `prose-sanitiser-media` now depends on `flate2`.
+- `docs/UPSTREAM-DELTA.md`: what was ported from watermarks-remover v0.6.0,
+  what this crate already covered, and what remains.
+
 ## [0.1.0] - 2026-09-03
 
 The Rust port and the workspace split.

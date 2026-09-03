@@ -100,7 +100,7 @@ As of 2026-09-03. Taken from the research brief, section B.
 ### Install
 
 ```sh
-# From source (needs Rust 1.85+):
+# From source (needs Rust 1.89+):
 cargo install prose-sanitiser
 
 # Or grab a prebuilt binary from the GitHub release:

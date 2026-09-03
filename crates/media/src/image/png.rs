@@ -26,6 +26,100 @@ const XMP_ITXT_KEYWORD: &[u8] = b"XML:com.adobe.xmp\0";
 /// Textual chunk types, all of which may carry provenance strings.
 const TEXT_CHUNKS: &[&[u8]] = &[b"tEXt", b"zTXt", b"iTXt"];
 
+/// Most bytes one compressed text chunk may inflate to before it is abandoned.
+///
+/// A `zTXt` payload is an attacker-supplied deflate stream, so its inflated
+/// size is unbounded by the file size: a few hundred compressed bytes can
+/// expand to gigabytes. Detection only needs enough text to match a marker, so
+/// the read stops at this cap rather than trusting the stream.
+const MAX_TEXT_INFLATED_BYTES: u64 = 1 << 20;
+
+/// Most bytes all compressed text chunks in one file may inflate to together.
+///
+/// The per-chunk cap alone is not enough: a PNG may carry arbitrarily many
+/// `zTXt` chunks, each individually under the cap. The budget is cumulative so
+/// the total work stays bounded by the file, not by the chunk count.
+const MAX_TEXT_INFLATED_TOTAL_BYTES: u64 = 8 << 20;
+
+/// A cumulative inflate allowance for one pass over one file.
+struct InflateBudget {
+    remaining: u64,
+}
+
+impl InflateBudget {
+    fn new() -> Self {
+        Self {
+            remaining: MAX_TEXT_INFLATED_TOTAL_BYTES,
+        }
+    }
+
+    /// Inflate a zlib stream, stopping at whichever cap binds first.
+    ///
+    /// Returns `None` when the stream is not valid zlib, when it is empty, or
+    /// when it would exceed a cap. A refusal is deliberately indistinguishable
+    /// from a parse failure at the call sites: both mean "no readable text
+    /// here", and neither is a reason to fail the whole inspection.
+    fn inflate(&mut self, data: &[u8]) -> Option<Vec<u8>> {
+        use std::io::Read;
+
+        let allowance = self.remaining.min(MAX_TEXT_INFLATED_BYTES);
+        if allowance == 0 {
+            return None;
+        }
+        let mut out = Vec::new();
+        // Read one byte past the allowance so an over-long stream is detected
+        // rather than silently truncated into a false negative.
+        let mut reader = flate2::read::ZlibDecoder::new(data).take(allowance + 1);
+        if reader.read_to_end(&mut out).is_err() {
+            return None;
+        }
+        if out.len() as u64 > allowance {
+            self.remaining = self.remaining.saturating_sub(allowance);
+            return None;
+        }
+        self.remaining = self.remaining.saturating_sub(out.len() as u64);
+        (!out.is_empty()).then_some(out)
+    }
+}
+
+/// The compressed text carried by a `zTXt` or `iTXt` chunk, inflated.
+///
+/// Returns `None` for uncompressed or malformed chunks, whose bytes the raw
+/// scan already covers. The framing follows the PNG specification: `zTXt` is
+/// keyword, NUL, one compression-method byte, then the zlib stream; `iTXt` is
+/// keyword, NUL, a compression flag, a compression method, a NUL-terminated
+/// language tag, a NUL-terminated translated keyword, then the text.
+fn inflated_text(kind: &[u8], payload: &[u8], budget: &mut InflateBudget) -> Option<Vec<u8>> {
+    let split = |bytes: &[u8]| -> Option<(usize, usize)> {
+        bytes
+            .iter()
+            .position(|byte| *byte == 0)
+            .map(|at| (at, at + 1))
+    };
+
+    if kind == b"zTXt" {
+        let (_, after) = split(payload)?;
+        // One compression-method byte follows the separator.
+        let stream = payload.get(after + 1..)?;
+        return budget.inflate(stream);
+    }
+    if kind == b"iTXt" {
+        let (_, after) = split(payload)?;
+        let rest = payload.get(after..)?;
+        // Compression flag, then compression method.
+        if *rest.first()? != 1 {
+            return None;
+        }
+        let rest = rest.get(2..)?;
+        let (_, after_language) = split(rest)?;
+        let rest = rest.get(after_language..)?;
+        let (_, after_translated) = split(rest)?;
+        let stream = rest.get(after_translated..)?;
+        return budget.inflate(stream);
+    }
+    None
+}
+
 /// Chunk types removed unconditionally: they exist only to carry metadata.
 ///
 /// `eXIf` is the PNG Exif container, `caBX` the C2PA JUMBF box recommended
@@ -66,6 +160,7 @@ pub fn inspect_png(data: &[u8]) -> (bool, bool, Vec<String>) {
         return (false, false, vec!["not a PNG".to_string()]);
     }
     let combined = ai_and_c2pa_markers();
+    let mut budget = InflateBudget::new();
 
     match parse(data) {
         Ok(png) => {
@@ -80,13 +175,28 @@ pub fn inspect_png(data: &[u8]) -> (bool, bool, Vec<String>) {
                     findings.push("PNG iTXt XMP packet (XML:com.adobe.xmp)".to_string());
                 }
                 if TEXT_CHUNKS.contains(&&kind[..]) || kind == *b"eXIf" {
-                    let hits = contains_any(chunk.contents(), &combined);
+                    let payload = chunk.contents();
+                    let hits = contains_any(payload, &combined);
                     if !hits.is_empty() {
                         has_ai = true;
                         if hits_name_c2pa(&hits, false) {
                             has_c2pa = true;
                         }
                         findings.push(format!("PNG {name}: {}", join_hits(&hits, 8)));
+                    }
+                    // A deflated payload hides its markers from the raw scan
+                    // above, so a compressed chunk is inflated under a budget
+                    // and scanned again.
+                    if let Some(text) = inflated_text(&kind, payload, &mut budget) {
+                        let hits = contains_any(&text, &combined);
+                        if !hits.is_empty() {
+                            has_ai = true;
+                            if hits_name_c2pa(&hits, false) {
+                                has_c2pa = true;
+                            }
+                            findings
+                                .push(format!("PNG {name} (compressed): {}", join_hits(&hits, 8)));
+                        }
                     }
                 }
             }
@@ -105,7 +215,12 @@ pub fn inspect_png(data: &[u8]) -> (bool, bool, Vec<String>) {
 }
 
 /// Decide whether one chunk is dropped, and say why.
-fn drop_reason(chunk: &PngChunk, strip_all_text: bool, combined: &[&[u8]]) -> Option<String> {
+fn drop_reason(
+    chunk: &PngChunk,
+    strip_all_text: bool,
+    combined: &[&[u8]],
+    budget: &mut InflateBudget,
+) -> Option<String> {
     let kind = chunk.kind();
     let name = chunk_name(&kind);
     let payload = chunk.contents();
@@ -119,6 +234,13 @@ fn drop_reason(chunk: &PngChunk, strip_all_text: bool, combined: &[&[u8]]) -> Op
         }
         if !contains_any(payload, combined).is_empty() {
             return Some(format!("drop chunk {name}"));
+        }
+        // The same inflate the inspect walk performs, so a marker that only
+        // exists inside the deflate stream is removed and not merely reported.
+        if let Some(text) = inflated_text(&kind, payload, budget) {
+            if !contains_any(&text, combined).is_empty() {
+                return Some(format!("drop chunk {name} (marker in compressed text)"));
+            }
         }
         return None;
     }
@@ -150,17 +272,18 @@ pub fn strip_png(data: &[u8], strip_all_text: bool) -> Result<(Vec<u8>, Vec<Stri
     }
     let mut png = parse(data).map_err(|error| format!("malformed PNG: {error}"))?;
     let combined = ai_and_c2pa_markers();
+    let mut budget = InflateBudget::new();
 
     let mut actions: Vec<String> = Vec::new();
-    png.chunks_mut().retain(
-        |chunk| match drop_reason(chunk, strip_all_text, &combined) {
+    png.chunks_mut().retain(|chunk| {
+        match drop_reason(chunk, strip_all_text, &combined, &mut budget) {
             Some(action) => {
                 actions.push(action);
                 false
             }
             None => true,
-        },
-    );
+        }
+    });
 
     if actions.is_empty() {
         return Ok((

@@ -269,8 +269,14 @@ fn bare_file_paths_are_protected() {
 fn a_slash_in_prose_is_not_a_path() {
     // The line the path test walks. Two words joined by a slash are English,
     // not a filename, and excluding them would silence a real class of finding.
-    assert_eq!(matches("The color/center split is arbitrary."), ["color", "center"]);
-    assert_eq!(matches("Use color and/or center as you like."), ["color", "center"]);
+    assert_eq!(
+        matches("The color/center split is arbitrary."),
+        ["color", "center"]
+    );
+    assert_eq!(
+        matches("Use color and/or center as you like."),
+        ["color", "center"]
+    );
 }
 
 #[test]

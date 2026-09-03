@@ -78,76 +78,12 @@
     ]
   ],
   "skip_surrogates": true,
-  "digest": "92e6b811cb22e1a20ac5350003963d3dfc21df86b99e1660657e3ef1303f4d8c",
+  "digest": "ea669ec23f25d5351f1d8b315d3deee5b62ce79cc3b8c562ca7759b094cca8dd",
   "sample": [
     [
       160,
-      "none",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "none",
+      "arabic",
       "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "none",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "ascii",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "ascii",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "ascii",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "emoji",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "emoji",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "emoji",
-      "paranoid",
       "replace",
       " ",
       "space"
@@ -163,6 +99,14 @@
     [
       160,
       "arabic",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "ascii",
       "aggressive",
       "replace",
       " ",
@@ -170,104 +114,168 @@
     ],
     [
       160,
+      "ascii",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "ascii",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "emoji",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "emoji",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "emoji",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "jamo",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "jamo",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "jamo",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "khmer",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "khmer",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "khmer",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "mongolian",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "mongolian",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "mongolian",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "none",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "none",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      160,
+      "none",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      173,
+      "arabic",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "arabic",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
       "arabic",
       "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "mongolian",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "mongolian",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "mongolian",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "khmer",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "khmer",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "khmer",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "jamo",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "jamo",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      160,
-      "jamo",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      173,
-      "none",
-      "default",
       "strip",
       "",
       "strip"
     ],
     [
       173,
-      "none",
+      "ascii",
       "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "none",
-      "paranoid",
       "strip",
       "",
       "strip"
@@ -283,15 +291,15 @@
     [
       173,
       "ascii",
-      "aggressive",
+      "paranoid",
       "strip",
       "",
       "strip"
     ],
     [
       173,
-      "ascii",
-      "paranoid",
+      "emoji",
+      "aggressive",
       "strip",
       "",
       "strip"
@@ -307,14 +315,6 @@
     [
       173,
       "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "emoji",
       "paranoid",
       "strip",
       "",
@@ -322,72 +322,8 @@
     ],
     [
       173,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "arabic",
+      "jamo",
       "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      173,
-      "khmer",
-      "paranoid",
       "strip",
       "",
       "strip"
@@ -403,6 +339,14 @@
     [
       173,
       "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "khmer",
       "aggressive",
       "strip",
       "",
@@ -410,7 +354,63 @@
     ],
     [
       173,
-      "jamo",
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "none",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      173,
+      "none",
       "paranoid",
       "strip",
       "",
@@ -418,15 +418,7 @@
     ],
     [
       1072,
-      "none",
-      "default",
-      "keep",
-      "а",
-      null
-    ],
-    [
-      1072,
-      "none",
+      "arabic",
       "aggressive",
       "replace",
       "a",
@@ -434,16 +426,16 @@
     ],
     [
       1072,
-      "none",
-      "paranoid",
+      "arabic",
+      "default",
       "keep",
       "а",
       null
     ],
     [
       1072,
-      "ascii",
-      "default",
+      "arabic",
+      "paranoid",
       "keep",
       "а",
       null
@@ -459,15 +451,15 @@
     [
       1072,
       "ascii",
-      "paranoid",
+      "default",
       "keep",
       "а",
       null
     ],
     [
       1072,
-      "emoji",
-      "default",
+      "ascii",
+      "paranoid",
       "keep",
       "а",
       null
@@ -483,14 +475,6 @@
     [
       1072,
       "emoji",
-      "paranoid",
-      "keep",
-      "а",
-      null
-    ],
-    [
-      1072,
-      "arabic",
       "default",
       "keep",
       "а",
@@ -498,72 +482,8 @@
     ],
     [
       1072,
-      "arabic",
-      "aggressive",
-      "replace",
-      "a",
-      "confusable"
-    ],
-    [
-      1072,
-      "arabic",
+      "emoji",
       "paranoid",
-      "keep",
-      "а",
-      null
-    ],
-    [
-      1072,
-      "mongolian",
-      "default",
-      "keep",
-      "а",
-      null
-    ],
-    [
-      1072,
-      "mongolian",
-      "aggressive",
-      "replace",
-      "a",
-      "confusable"
-    ],
-    [
-      1072,
-      "mongolian",
-      "paranoid",
-      "keep",
-      "а",
-      null
-    ],
-    [
-      1072,
-      "khmer",
-      "default",
-      "keep",
-      "а",
-      null
-    ],
-    [
-      1072,
-      "khmer",
-      "aggressive",
-      "replace",
-      "a",
-      "confusable"
-    ],
-    [
-      1072,
-      "khmer",
-      "paranoid",
-      "keep",
-      "а",
-      null
-    ],
-    [
-      1072,
-      "jamo",
-      "default",
       "keep",
       "а",
       null
@@ -579,6 +499,86 @@
     [
       1072,
       "jamo",
+      "default",
+      "keep",
+      "а",
+      null
+    ],
+    [
+      1072,
+      "jamo",
+      "paranoid",
+      "keep",
+      "а",
+      null
+    ],
+    [
+      1072,
+      "khmer",
+      "aggressive",
+      "replace",
+      "a",
+      "confusable"
+    ],
+    [
+      1072,
+      "khmer",
+      "default",
+      "keep",
+      "а",
+      null
+    ],
+    [
+      1072,
+      "khmer",
+      "paranoid",
+      "keep",
+      "а",
+      null
+    ],
+    [
+      1072,
+      "mongolian",
+      "aggressive",
+      "replace",
+      "a",
+      "confusable"
+    ],
+    [
+      1072,
+      "mongolian",
+      "default",
+      "keep",
+      "а",
+      null
+    ],
+    [
+      1072,
+      "mongolian",
+      "paranoid",
+      "keep",
+      "а",
+      null
+    ],
+    [
+      1072,
+      "none",
+      "aggressive",
+      "replace",
+      "a",
+      "confusable"
+    ],
+    [
+      1072,
+      "none",
+      "default",
+      "keep",
+      "а",
+      null
+    ],
+    [
+      1072,
+      "none",
       "paranoid",
       "keep",
       "а",
@@ -586,15 +586,7 @@
     ],
     [
       1536,
-      "none",
-      "default",
-      "keep",
-      "؀",
-      null
-    ],
-    [
-      1536,
-      "none",
+      "arabic",
       "aggressive",
       "keep",
       "؀",
@@ -602,7 +594,15 @@
     ],
     [
       1536,
-      "none",
+      "arabic",
+      "default",
+      "keep",
+      "؀",
+      null
+    ],
+    [
+      1536,
+      "arabic",
       "paranoid",
       "strip",
       "",
@@ -611,7 +611,7 @@
     [
       1536,
       "ascii",
-      "default",
+      "aggressive",
       "keep",
       "؀",
       null
@@ -619,7 +619,7 @@
     [
       1536,
       "ascii",
-      "aggressive",
+      "default",
       "keep",
       "؀",
       null
@@ -635,14 +635,6 @@
     [
       1536,
       "emoji",
-      "default",
-      "keep",
-      "؀",
-      null
-    ],
-    [
-      1536,
-      "emoji",
       "aggressive",
       "keep",
       "؀",
@@ -651,14 +643,6 @@
     [
       1536,
       "emoji",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      1536,
-      "arabic",
       "default",
       "keep",
       "؀",
@@ -666,63 +650,7 @@
     ],
     [
       1536,
-      "arabic",
-      "aggressive",
-      "keep",
-      "؀",
-      null
-    ],
-    [
-      1536,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      1536,
-      "mongolian",
-      "default",
-      "keep",
-      "؀",
-      null
-    ],
-    [
-      1536,
-      "mongolian",
-      "aggressive",
-      "keep",
-      "؀",
-      null
-    ],
-    [
-      1536,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      1536,
-      "khmer",
-      "default",
-      "keep",
-      "؀",
-      null
-    ],
-    [
-      1536,
-      "khmer",
-      "aggressive",
-      "keep",
-      "؀",
-      null
-    ],
-    [
-      1536,
-      "khmer",
+      "emoji",
       "paranoid",
       "strip",
       "",
@@ -731,7 +659,7 @@
     [
       1536,
       "jamo",
-      "default",
+      "aggressive",
       "keep",
       "؀",
       null
@@ -739,7 +667,7 @@
     [
       1536,
       "jamo",
-      "aggressive",
+      "default",
       "keep",
       "؀",
       null
@@ -753,16 +681,80 @@
       "other_cf"
     ],
     [
-      4448,
-      "none",
+      1536,
+      "khmer",
+      "aggressive",
+      "keep",
+      "؀",
+      null
+    ],
+    [
+      1536,
+      "khmer",
       "default",
+      "keep",
+      "؀",
+      null
+    ],
+    [
+      1536,
+      "khmer",
+      "paranoid",
       "strip",
       "",
-      "strip"
+      "other_cf"
+    ],
+    [
+      1536,
+      "mongolian",
+      "aggressive",
+      "keep",
+      "؀",
+      null
+    ],
+    [
+      1536,
+      "mongolian",
+      "default",
+      "keep",
+      "؀",
+      null
+    ],
+    [
+      1536,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      1536,
+      "none",
+      "aggressive",
+      "keep",
+      "؀",
+      null
+    ],
+    [
+      1536,
+      "none",
+      "default",
+      "keep",
+      "؀",
+      null
+    ],
+    [
+      1536,
+      "none",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
     ],
     [
       4448,
-      "none",
+      "arabic",
       "aggressive",
       "strip",
       "",
@@ -770,8 +762,24 @@
     ],
     [
       4448,
-      "none",
+      "arabic",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
+      "arabic",
       "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
+      "ascii",
+      "aggressive",
       "strip",
       "",
       "strip"
@@ -787,15 +795,15 @@
     [
       4448,
       "ascii",
-      "aggressive",
+      "paranoid",
       "strip",
       "",
       "strip"
     ],
     [
       4448,
-      "ascii",
-      "paranoid",
+      "emoji",
+      "aggressive",
       "strip",
       "",
       "strip"
@@ -811,86 +819,6 @@
     [
       4448,
       "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "emoji",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "arabic",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      4448,
-      "khmer",
       "paranoid",
       "strip",
       "",
@@ -899,7 +827,7 @@
     [
       4448,
       "jamo",
-      "default",
+      "aggressive",
       "keep",
       "ᅠ",
       null
@@ -907,7 +835,7 @@
     [
       4448,
       "jamo",
-      "aggressive",
+      "default",
       "keep",
       "ᅠ",
       null
@@ -921,15 +849,55 @@
       "strip"
     ],
     [
-      6068,
-      "none",
+      4448,
+      "khmer",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
+      "khmer",
       "default",
       "strip",
       "",
       "strip"
     ],
     [
-      6068,
+      4448,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
       "none",
       "aggressive",
       "strip",
@@ -937,65 +905,17 @@
       "strip"
     ],
     [
-      6068,
+      4448,
+      "none",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      4448,
       "none",
       "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "ascii",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "ascii",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "emoji",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "emoji",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "arabic",
-      "default",
       "strip",
       "",
       "strip"
@@ -1011,14 +931,6 @@
     [
       6068,
       "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "mongolian",
       "default",
       "strip",
       "",
@@ -1026,7 +938,15 @@
     ],
     [
       6068,
-      "mongolian",
+      "arabic",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "ascii",
       "aggressive",
       "strip",
       "",
@@ -1034,7 +954,63 @@
     ],
     [
       6068,
-      "mongolian",
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "ascii",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "emoji",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "emoji",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "emoji",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "jamo",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "jamo",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "jamo",
       "paranoid",
       "strip",
       "",
@@ -1043,7 +1019,7 @@
     [
       6068,
       "khmer",
-      "default",
+      "aggressive",
       "keep",
       "឴",
       null
@@ -1051,7 +1027,7 @@
     [
       6068,
       "khmer",
-      "aggressive",
+      "default",
       "keep",
       "឴",
       null
@@ -1066,15 +1042,7 @@
     ],
     [
       6068,
-      "jamo",
-      "default",
-      "strip",
-      "",
-      "strip"
-    ],
-    [
-      6068,
-      "jamo",
+      "mongolian",
       "aggressive",
       "strip",
       "",
@@ -1082,7 +1050,39 @@
     ],
     [
       6068,
-      "jamo",
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "none",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      6068,
+      "none",
       "paranoid",
       "strip",
       "",
@@ -1090,72 +1090,8 @@
     ],
     [
       6155,
-      "none",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "none",
+      "arabic",
       "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "none",
-      "paranoid",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "ascii",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "ascii",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "emoji",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "emoji",
-      "paranoid",
       "strip",
       "",
       "variation_selector"
@@ -1171,6 +1107,14 @@
     [
       6155,
       "arabic",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "ascii",
       "aggressive",
       "strip",
       "",
@@ -1178,11 +1122,99 @@
     ],
     [
       6155,
-      "arabic",
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "ascii",
       "paranoid",
       "strip",
       "",
       "variation_selector"
+    ],
+    [
+      6155,
+      "emoji",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "emoji",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "emoji",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "jamo",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "jamo",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "khmer",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      6155,
+      "mongolian",
+      "aggressive",
+      "keep",
+      "᠋",
+      null
     ],
     [
       6155,
@@ -1195,14 +1227,6 @@
     [
       6155,
       "mongolian",
-      "aggressive",
-      "keep",
-      "᠋",
-      null
-    ],
-    [
-      6155,
-      "mongolian",
       "paranoid",
       "strip",
       "",
@@ -1210,15 +1234,7 @@
     ],
     [
       6155,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "khmer",
+      "none",
       "aggressive",
       "strip",
       "",
@@ -1226,15 +1242,7 @@
     ],
     [
       6155,
-      "khmer",
-      "paranoid",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "jamo",
+      "none",
       "default",
       "strip",
       "",
@@ -1242,88 +1250,40 @@
     ],
     [
       6155,
-      "jamo",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      6155,
-      "jamo",
+      "none",
       "paranoid",
       "strip",
       "",
       "variation_selector"
     ],
     [
-      8203,
-      "none",
-      "default",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "none",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "none",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
+      6159,
       "ascii",
       "default",
       "strip",
       "",
-      "zwj_family"
+      "variation_selector"
     ],
     [
-      8203,
-      "ascii",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "emoji",
+      6159,
+      "mongolian",
       "default",
-      "strip",
-      "",
-      "zwj_family"
+      "keep",
+      "᠏",
+      null
     ],
     [
-      8203,
-      "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "emoji",
+      6159,
+      "mongolian",
       "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      8203,
+      "arabic",
+      "aggressive",
       "strip",
       "",
       "zwj_family"
@@ -1339,14 +1299,6 @@
     [
       8203,
       "arabic",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "arabic",
       "paranoid",
       "strip",
       "",
@@ -1354,15 +1306,7 @@
     ],
     [
       8203,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "mongolian",
+      "ascii",
       "aggressive",
       "strip",
       "",
@@ -1370,15 +1314,7 @@
     ],
     [
       8203,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8203,
-      "khmer",
+      "ascii",
       "default",
       "strip",
       "",
@@ -1386,7 +1322,15 @@
     ],
     [
       8203,
-      "khmer",
+      "ascii",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
+      "emoji",
       "aggressive",
       "strip",
       "",
@@ -1394,16 +1338,16 @@
     ],
     [
       8203,
-      "khmer",
-      "paranoid",
+      "emoji",
+      "default",
       "strip",
       "",
       "zwj_family"
     ],
     [
       8203,
-      "jamo",
-      "default",
+      "emoji",
+      "paranoid",
       "strip",
       "",
       "zwj_family"
@@ -1419,21 +1363,69 @@
     [
       8203,
       "jamo",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8204,
-      "none",
       "default",
       "strip",
       "",
       "zwj_family"
     ],
     [
-      8204,
+      8203,
+      "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
+      "khmer",
+      "aggressive",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8203,
       "none",
       "aggressive",
       "strip",
@@ -1441,56 +1433,16 @@
       "zwj_family"
     ],
     [
-      8204,
+      8203,
       "none",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8204,
-      "ascii",
       "default",
       "strip",
       "",
       "zwj_family"
     ],
     [
-      8204,
-      "ascii",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8204,
-      "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8204,
-      "emoji",
-      "default",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8204,
-      "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8204,
-      "emoji",
+      8203,
+      "none",
       "paranoid",
       "strip",
       "",
@@ -1499,7 +1451,7 @@
     [
       8204,
       "arabic",
-      "default",
+      "aggressive",
       "keep",
       "‌",
       null
@@ -1507,7 +1459,7 @@
     [
       8204,
       "arabic",
-      "aggressive",
+      "default",
       "keep",
       "‌",
       null
@@ -1522,23 +1474,23 @@
     ],
     [
       8204,
-      "mongolian",
-      "default",
-      "keep",
-      "‌",
-      null
-    ],
-    [
-      8204,
-      "mongolian",
+      "ascii",
       "aggressive",
-      "keep",
-      "‌",
-      null
+      "strip",
+      "",
+      "zwj_family"
     ],
     [
       8204,
-      "mongolian",
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8204,
+      "ascii",
       "paranoid",
       "strip",
       "",
@@ -1546,35 +1498,27 @@
     ],
     [
       8204,
-      "khmer",
-      "default",
-      "keep",
-      "‌",
-      null
-    ],
-    [
-      8204,
-      "khmer",
+      "emoji",
       "aggressive",
-      "keep",
-      "‌",
-      null
-    ],
-    [
-      8204,
-      "khmer",
-      "paranoid",
       "strip",
       "",
       "zwj_family"
     ],
     [
       8204,
-      "jamo",
+      "emoji",
       "default",
-      "keep",
-      "‌",
-      null
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8204,
+      "emoji",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
     ],
     [
       8204,
@@ -1587,21 +1531,69 @@
     [
       8204,
       "jamo",
+      "default",
+      "keep",
+      "‌",
+      null
+    ],
+    [
+      8204,
+      "jamo",
       "paranoid",
       "strip",
       "",
       "zwj_family"
     ],
     [
-      8205,
-      "none",
+      8204,
+      "khmer",
+      "aggressive",
+      "keep",
+      "‌",
+      null
+    ],
+    [
+      8204,
+      "khmer",
       "default",
+      "keep",
+      "‌",
+      null
+    ],
+    [
+      8204,
+      "khmer",
+      "paranoid",
       "strip",
       "",
       "zwj_family"
     ],
     [
-      8205,
+      8204,
+      "mongolian",
+      "aggressive",
+      "keep",
+      "‌",
+      null
+    ],
+    [
+      8204,
+      "mongolian",
+      "default",
+      "keep",
+      "‌",
+      null
+    ],
+    [
+      8204,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8204,
       "none",
       "aggressive",
       "strip",
@@ -1609,7 +1601,15 @@
       "zwj_family"
     ],
     [
-      8205,
+      8204,
+      "none",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8204,
       "none",
       "paranoid",
       "strip",
@@ -1618,8 +1618,24 @@
     ],
     [
       8205,
-      "ascii",
+      "arabic",
+      "aggressive",
+      "keep",
+      "‍",
+      null
+    ],
+    [
+      8205,
+      "arabic",
       "default",
+      "keep",
+      "‍",
+      null
+    ],
+    [
+      8205,
+      "arabic",
+      "paranoid",
       "strip",
       "",
       "zwj_family"
@@ -1635,10 +1651,26 @@
     [
       8205,
       "ascii",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8205,
+      "ascii",
       "paranoid",
       "strip",
       "",
       "zwj_family"
+    ],
+    [
+      8205,
+      "emoji",
+      "aggressive",
+      "keep",
+      "‍",
+      null
     ],
     [
       8205,
@@ -1651,14 +1683,6 @@
     [
       8205,
       "emoji",
-      "aggressive",
-      "keep",
-      "‍",
-      null
-    ],
-    [
-      8205,
-      "emoji",
       "paranoid",
       "strip",
       "",
@@ -1666,15 +1690,7 @@
     ],
     [
       8205,
-      "arabic",
-      "default",
-      "keep",
-      "‍",
-      null
-    ],
-    [
-      8205,
-      "arabic",
+      "jamo",
       "aggressive",
       "keep",
       "‍",
@@ -1682,15 +1698,7 @@
     ],
     [
       8205,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      8205,
-      "mongolian",
+      "jamo",
       "default",
       "keep",
       "‍",
@@ -1698,15 +1706,7 @@
     ],
     [
       8205,
-      "mongolian",
-      "aggressive",
-      "keep",
-      "‍",
-      null
-    ],
-    [
-      8205,
-      "mongolian",
+      "jamo",
       "paranoid",
       "strip",
       "",
@@ -1715,7 +1715,7 @@
     [
       8205,
       "khmer",
-      "default",
+      "aggressive",
       "keep",
       "‍",
       null
@@ -1723,7 +1723,7 @@
     [
       8205,
       "khmer",
-      "aggressive",
+      "default",
       "keep",
       "‍",
       null
@@ -1738,15 +1738,7 @@
     ],
     [
       8205,
-      "jamo",
-      "default",
-      "keep",
-      "‍",
-      null
-    ],
-    [
-      8205,
-      "jamo",
+      "mongolian",
       "aggressive",
       "keep",
       "‍",
@@ -1754,7 +1746,39 @@
     ],
     [
       8205,
-      "jamo",
+      "mongolian",
+      "default",
+      "keep",
+      "‍",
+      null
+    ],
+    [
+      8205,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8205,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8205,
+      "none",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      8205,
+      "none",
       "paranoid",
       "strip",
       "",
@@ -1762,72 +1786,8 @@
     ],
     [
       8238,
-      "none",
-      "default",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "none",
+      "arabic",
       "aggressive",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "none",
-      "paranoid",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "ascii",
-      "default",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "ascii",
-      "aggressive",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "emoji",
-      "default",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "emoji",
-      "paranoid",
       "strip",
       "",
       "bidi"
@@ -1843,6 +1803,14 @@
     [
       8238,
       "arabic",
+      "paranoid",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "ascii",
       "aggressive",
       "strip",
       "",
@@ -1850,104 +1818,184 @@
     ],
     [
       8238,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "ascii",
+      "paranoid",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "emoji",
+      "aggressive",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "emoji",
+      "default",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "emoji",
+      "paranoid",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "jamo",
+      "aggressive",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "jamo",
+      "default",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "khmer",
+      "aggressive",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "none",
+      "default",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8238,
+      "none",
+      "paranoid",
+      "strip",
+      "",
+      "bidi"
+    ],
+    [
+      8293,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "reserved_ignorable"
+    ],
+    [
+      8293,
+      "ascii",
+      "paranoid",
+      "strip",
+      "",
+      "reserved_ignorable"
+    ],
+    [
+      12288,
+      "arabic",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "arabic",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
       "arabic",
       "paranoid",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "khmer",
-      "paranoid",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "jamo",
-      "default",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "jamo",
-      "aggressive",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      8238,
-      "jamo",
-      "paranoid",
-      "strip",
-      "",
-      "bidi"
-    ],
-    [
-      12288,
-      "none",
-      "default",
       "replace",
       " ",
       "space"
     ],
     [
       12288,
-      "none",
+      "ascii",
       "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "none",
-      "paranoid",
       "replace",
       " ",
       "space"
@@ -1963,6 +2011,14 @@
     [
       12288,
       "ascii",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "emoji",
       "aggressive",
       "replace",
       " ",
@@ -1970,131 +2026,283 @@
     ],
     [
       12288,
+      "emoji",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "emoji",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "jamo",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "jamo",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "jamo",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "khmer",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "khmer",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "khmer",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "mongolian",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "mongolian",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "mongolian",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "none",
+      "aggressive",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "none",
+      "default",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12288,
+      "none",
+      "paranoid",
+      "replace",
+      " ",
+      "space"
+    ],
+    [
+      12644,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      12644,
+      "jamo",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      57344,
+      "arabic",
+      "aggressive",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "arabic",
+      "default",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "arabic",
+      "paranoid",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "ascii",
+      "aggressive",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
       "ascii",
       "paranoid",
-      "replace",
-      " ",
-      "space"
+      "strip",
+      "",
+      "private_use"
     ],
     [
-      12288,
-      "emoji",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
+      57344,
       "emoji",
       "aggressive",
-      "replace",
-      " ",
-      "space"
+      "strip",
+      "",
+      "private_use"
     ],
     [
-      12288,
+      57344,
+      "emoji",
+      "default",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
       "emoji",
       "paranoid",
-      "replace",
-      " ",
-      "space"
+      "strip",
+      "",
+      "private_use"
     ],
     [
-      12288,
-      "arabic",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "arabic",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "arabic",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "mongolian",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "mongolian",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "mongolian",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "khmer",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "khmer",
-      "aggressive",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "khmer",
-      "paranoid",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
-      "jamo",
-      "default",
-      "replace",
-      " ",
-      "space"
-    ],
-    [
-      12288,
+      57344,
       "jamo",
       "aggressive",
-      "replace",
-      " ",
-      "space"
+      "strip",
+      "",
+      "private_use"
     ],
     [
-      12288,
+      57344,
+      "jamo",
+      "default",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
       "jamo",
       "paranoid",
-      "replace",
-      " ",
-      "space"
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "khmer",
+      "aggressive",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "private_use"
+    ],
+    [
+      57344,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "private_use"
     ],
     [
       57344,
@@ -2107,174 +2315,30 @@
     [
       57344,
       "none",
-      "aggressive",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "none",
       "paranoid",
       "strip",
       "",
       "private_use"
     ],
     [
-      57344,
+      64976,
       "ascii",
       "default",
       "strip",
       "",
-      "private_use"
+      "noncharacter"
     ],
     [
-      57344,
+      65007,
       "ascii",
-      "aggressive",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "emoji",
       "default",
       "strip",
       "",
-      "private_use"
-    ],
-    [
-      57344,
-      "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "emoji",
-      "paranoid",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "arabic",
-      "aggressive",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "khmer",
-      "paranoid",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "jamo",
-      "default",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "jamo",
-      "aggressive",
-      "strip",
-      "",
-      "private_use"
-    ],
-    [
-      57344,
-      "jamo",
-      "paranoid",
-      "strip",
-      "",
-      "private_use"
+      "noncharacter"
     ],
     [
       65039,
-      "none",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "none",
+      "arabic",
       "aggressive",
       "strip",
       "",
@@ -2282,16 +2346,16 @@
     ],
     [
       65039,
-      "none",
-      "paranoid",
+      "arabic",
+      "default",
       "strip",
       "",
       "variation_selector"
     ],
     [
       65039,
-      "ascii",
-      "default",
+      "arabic",
+      "paranoid",
       "strip",
       "",
       "variation_selector"
@@ -2307,10 +2371,26 @@
     [
       65039,
       "ascii",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "ascii",
       "paranoid",
       "strip",
       "",
       "variation_selector"
+    ],
+    [
+      65039,
+      "emoji",
+      "aggressive",
+      "keep",
+      "️",
+      null
     ],
     [
       65039,
@@ -2323,14 +2403,6 @@
     [
       65039,
       "emoji",
-      "aggressive",
-      "keep",
-      "️",
-      null
-    ],
-    [
-      65039,
-      "emoji",
       "paranoid",
       "strip",
       "",
@@ -2338,72 +2410,8 @@
     ],
     [
       65039,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "arabic",
+      "jamo",
       "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      65039,
-      "khmer",
-      "paranoid",
       "strip",
       "",
       "variation_selector"
@@ -2419,6 +2427,14 @@
     [
       65039,
       "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "khmer",
       "aggressive",
       "strip",
       "",
@@ -2426,7 +2442,63 @@
     ],
     [
       65039,
-      "jamo",
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "none",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      65039,
+      "none",
       "paranoid",
       "strip",
       "",
@@ -2434,15 +2506,7 @@
     ],
     [
       65279,
-      "none",
-      "default",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "none",
+      "arabic",
       "aggressive",
       "strip",
       "",
@@ -2450,16 +2514,16 @@
     ],
     [
       65279,
-      "none",
-      "paranoid",
+      "arabic",
+      "default",
       "strip",
       "",
       "zwj_family"
     ],
     [
       65279,
-      "ascii",
-      "default",
+      "arabic",
+      "paranoid",
       "strip",
       "",
       "zwj_family"
@@ -2475,7 +2539,23 @@
     [
       65279,
       "ascii",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "ascii",
       "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "emoji",
+      "aggressive",
       "strip",
       "",
       "zwj_family"
@@ -2491,14 +2571,6 @@
     [
       65279,
       "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "emoji",
       "paranoid",
       "strip",
       "",
@@ -2506,72 +2578,8 @@
     ],
     [
       65279,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "arabic",
+      "jamo",
       "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "zwj_family"
-    ],
-    [
-      65279,
-      "khmer",
-      "paranoid",
       "strip",
       "",
       "zwj_family"
@@ -2587,6 +2595,14 @@
     [
       65279,
       "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "khmer",
       "aggressive",
       "strip",
       "",
@@ -2594,7 +2610,63 @@
     ],
     [
       65279,
-      "jamo",
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "none",
+      "default",
+      "strip",
+      "",
+      "zwj_family"
+    ],
+    [
+      65279,
+      "none",
       "paranoid",
       "strip",
       "",
@@ -2602,15 +2674,7 @@
     ],
     [
       65313,
-      "none",
-      "default",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "none",
+      "arabic",
       "aggressive",
       "replace",
       "A",
@@ -2618,16 +2682,16 @@
     ],
     [
       65313,
-      "none",
-      "paranoid",
+      "arabic",
+      "default",
       "keep",
       "Ａ",
       null
     ],
     [
       65313,
-      "ascii",
-      "default",
+      "arabic",
+      "paranoid",
       "keep",
       "Ａ",
       null
@@ -2643,10 +2707,26 @@
     [
       65313,
       "ascii",
+      "default",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65313,
+      "ascii",
       "paranoid",
       "keep",
       "Ａ",
       null
+    ],
+    [
+      65313,
+      "emoji",
+      "aggressive",
+      "replace",
+      "A",
+      "confusable"
     ],
     [
       65313,
@@ -2659,95 +2739,7 @@
     [
       65313,
       "emoji",
-      "aggressive",
-      "replace",
-      "A",
-      "confusable"
-    ],
-    [
-      65313,
-      "emoji",
       "paranoid",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "arabic",
-      "default",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "arabic",
-      "aggressive",
-      "replace",
-      "A",
-      "confusable"
-    ],
-    [
-      65313,
-      "arabic",
-      "paranoid",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "mongolian",
-      "default",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "mongolian",
-      "aggressive",
-      "replace",
-      "A",
-      "confusable"
-    ],
-    [
-      65313,
-      "mongolian",
-      "paranoid",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "khmer",
-      "default",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "khmer",
-      "aggressive",
-      "replace",
-      "A",
-      "confusable"
-    ],
-    [
-      65313,
-      "khmer",
-      "paranoid",
-      "keep",
-      "Ａ",
-      null
-    ],
-    [
-      65313,
-      "jamo",
-      "default",
       "keep",
       "Ａ",
       null
@@ -2763,14 +2755,134 @@
     [
       65313,
       "jamo",
+      "default",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65313,
+      "jamo",
       "paranoid",
       "keep",
       "Ａ",
       null
+    ],
+    [
+      65313,
+      "khmer",
+      "aggressive",
+      "replace",
+      "A",
+      "confusable"
+    ],
+    [
+      65313,
+      "khmer",
+      "default",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65313,
+      "khmer",
+      "paranoid",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65313,
+      "mongolian",
+      "aggressive",
+      "replace",
+      "A",
+      "confusable"
+    ],
+    [
+      65313,
+      "mongolian",
+      "default",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65313,
+      "mongolian",
+      "paranoid",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65313,
+      "none",
+      "aggressive",
+      "replace",
+      "A",
+      "confusable"
+    ],
+    [
+      65313,
+      "none",
+      "default",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65313,
+      "none",
+      "paranoid",
+      "keep",
+      "Ａ",
+      null
+    ],
+    [
+      65440,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "strip"
+    ],
+    [
+      65520,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "reserved_ignorable"
+    ],
+    [
+      65534,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "noncharacter"
+    ],
+    [
+      65535,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "noncharacter"
     ],
     [
       119155,
-      "none",
+      "arabic",
+      "aggressive",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "arabic",
       "default",
       "strip",
       "",
@@ -2778,16 +2890,16 @@
     ],
     [
       119155,
-      "none",
-      "aggressive",
+      "arabic",
+      "paranoid",
       "strip",
       "",
       "other_cf"
     ],
     [
       119155,
-      "none",
-      "paranoid",
+      "ascii",
+      "aggressive",
       "strip",
       "",
       "other_cf"
@@ -2803,6 +2915,14 @@
     [
       119155,
       "ascii",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "emoji",
       "aggressive",
       "strip",
       "",
@@ -2810,135 +2930,135 @@
     ],
     [
       119155,
+      "emoji",
+      "default",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "emoji",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "jamo",
+      "aggressive",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "jamo",
+      "default",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "khmer",
+      "aggressive",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "khmer",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "none",
+      "default",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      119155,
+      "none",
+      "paranoid",
+      "strip",
+      "",
+      "other_cf"
+    ],
+    [
+      917504,
       "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "emoji",
       "default",
       "strip",
       "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "emoji",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "arabic",
-      "aggressive",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "khmer",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "jamo",
-      "default",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "jamo",
-      "aggressive",
-      "strip",
-      "",
-      "other_cf"
-    ],
-    [
-      119155,
-      "jamo",
-      "paranoid",
-      "strip",
-      "",
-      "other_cf"
+      "reserved_ignorable"
     ],
     [
       917569,
-      "none",
+      "arabic",
+      "aggressive",
+      "strip",
+      "",
+      "tag_chars"
+    ],
+    [
+      917569,
+      "arabic",
       "default",
       "strip",
       "",
@@ -2946,16 +3066,16 @@
     ],
     [
       917569,
-      "none",
-      "aggressive",
+      "arabic",
+      "paranoid",
       "strip",
       "",
       "tag_chars"
     ],
     [
       917569,
-      "none",
-      "paranoid",
+      "ascii",
+      "aggressive",
       "strip",
       "",
       "tag_chars"
@@ -2971,18 +3091,18 @@
     [
       917569,
       "ascii",
-      "aggressive",
+      "paranoid",
       "strip",
       "",
       "tag_chars"
     ],
     [
       917569,
-      "ascii",
-      "paranoid",
-      "strip",
-      "",
-      "tag_chars"
+      "emoji",
+      "aggressive",
+      "keep",
+      "󠁁",
+      null
     ],
     [
       917569,
@@ -2995,14 +3115,6 @@
     [
       917569,
       "emoji",
-      "aggressive",
-      "keep",
-      "󠁁",
-      null
-    ],
-    [
-      917569,
-      "emoji",
       "paranoid",
       "strip",
       "",
@@ -3010,72 +3122,8 @@
     ],
     [
       917569,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "arabic",
+      "jamo",
       "aggressive",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "tag_chars"
-    ],
-    [
-      917569,
-      "khmer",
-      "paranoid",
       "strip",
       "",
       "tag_chars"
@@ -3091,6 +3139,14 @@
     [
       917569,
       "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "tag_chars"
+    ],
+    [
+      917569,
+      "khmer",
       "aggressive",
       "strip",
       "",
@@ -3098,40 +3154,96 @@
     ],
     [
       917569,
-      "jamo",
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "tag_chars"
+    ],
+    [
+      917569,
+      "khmer",
       "paranoid",
       "strip",
       "",
       "tag_chars"
     ],
     [
-      917761,
-      "none",
+      917569,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "tag_chars"
+    ],
+    [
+      917569,
+      "mongolian",
       "default",
       "strip",
       "",
-      "variation_selector"
+      "tag_chars"
     ],
     [
-      917761,
+      917569,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "tag_chars"
+    ],
+    [
+      917569,
       "none",
       "aggressive",
       "strip",
       "",
-      "variation_selector"
+      "tag_chars"
     ],
     [
-      917761,
+      917569,
+      "none",
+      "default",
+      "strip",
+      "",
+      "tag_chars"
+    ],
+    [
+      917569,
       "none",
       "paranoid",
       "strip",
       "",
-      "variation_selector"
+      "tag_chars"
     ],
     [
-      917761,
+      917632,
       "ascii",
       "default",
+      "strip",
+      "",
+      "reserved_ignorable"
+    ],
+    [
+      917761,
+      "arabic",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "arabic",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "arabic",
+      "paranoid",
       "strip",
       "",
       "variation_selector"
@@ -3147,7 +3259,23 @@
     [
       917761,
       "ascii",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "ascii",
       "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "emoji",
+      "aggressive",
       "strip",
       "",
       "variation_selector"
@@ -3163,14 +3291,6 @@
     [
       917761,
       "emoji",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "emoji",
       "paranoid",
       "strip",
       "",
@@ -3178,72 +3298,8 @@
     ],
     [
       917761,
-      "arabic",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "arabic",
+      "jamo",
       "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "arabic",
-      "paranoid",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "mongolian",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "mongolian",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "mongolian",
-      "paranoid",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "khmer",
-      "default",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "khmer",
-      "aggressive",
-      "strip",
-      "",
-      "variation_selector"
-    ],
-    [
-      917761,
-      "khmer",
-      "paranoid",
       "strip",
       "",
       "variation_selector"
@@ -3259,6 +3315,14 @@
     [
       917761,
       "jamo",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "khmer",
       "aggressive",
       "strip",
       "",
@@ -3266,11 +3330,75 @@
     ],
     [
       917761,
-      "jamo",
+      "khmer",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "khmer",
       "paranoid",
       "strip",
       "",
       "variation_selector"
+    ],
+    [
+      917761,
+      "mongolian",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "mongolian",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "mongolian",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "none",
+      "aggressive",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "none",
+      "default",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      917761,
+      "none",
+      "paranoid",
+      "strip",
+      "",
+      "variation_selector"
+    ],
+    [
+      1114111,
+      "ascii",
+      "default",
+      "strip",
+      "",
+      "noncharacter"
     ]
   ],
   "superseded": [
@@ -3298,6 +3426,40 @@
           "U+021C LATIN CAPITAL LETTER YOGH"
         ],
         "method": "Regenerated both surfaces over the full enumeration and diffed row by row; the Python came from the skill snapshot at skill-workspaces/prose-sanitiser-workspace/skill-snapshot/text_unicode.py."
+      }
+    },
+    {
+      "digest": "92e6b811cb22e1a20ac5350003963d3dfc21df86b99e1660657e3ef1303f4d8c",
+      "generated_from": "prose-sanitiser Layer A at e1c261b (itself parity-checked against python text_unicode._decide)",
+      "replaced_on": "2026-09-03",
+      "reason": "Consolidated Layer A hardening ported from watermarks-remover v0.6.0 (#133): reserved Default_Ignorable code points, the 66 Unicode noncharacters, and three blank-rendering Default_Ignorable carriers (U+180F, U+3164, U+FFA0) whose Mn/Lo categories kept them out of the Cf catch-all.",
+      "measured_drift": {
+        "rows_compared": 1361157,
+        "rows_differing": 4072,
+        "percent_differing": 0.299,
+        "distinct_codepoints": 194,
+        "modes_affected": [
+          "default",
+          "aggressive",
+          "paranoid"
+        ],
+        "modes_unchanged": [],
+        "shape": "Every difference is keep -> strip. No codepoint the old surface stripped is now kept, and no action other than keep changed, so detection only widens. Breakdown: 3255 rows keep -> strip(reserved_ignorable), 756 keep -> strip(noncharacter), 42 keep -> strip(strip) for the two Hangul blank fillers, 19 keep -> strip(variation_selector) for U+180F. U+180F accounts for 19 rather than 21 rows because it is now KEPT after a Mongolian letter in default and aggressive modes, which is the in-context preservation working as intended.",
+        "blocks": [
+          "U+180F",
+          "U+2065",
+          "U+3164",
+          "U+FDD0..U+FDEF",
+          "U+FFA0",
+          "U+FFF0..U+FFF8",
+          "U+FFFE..U+FFFF",
+          "U+E0000",
+          "U+E0080..U+E00FF",
+          "U+E01F0..U+E01FF (enumeration ends at U+E0200)",
+          "U+10FFFE..U+10FFFF"
+        ],
+        "not_covered_by_this_enumeration": "The visible-layout format control rule (Egyptian quadrat U+13430..U+1343F, Duployan U+1BCA0..U+1BCA3, musical U+1D173..U+1D17A kept next to their own script) produces no drift here: the fixture's seven contexts contain no character of those scripts, so the preservation branch is never reached. It is covered by unit tests in crates/unicode/src/decide.rs instead.",
+        "method": "Regenerated both surfaces over the full enumeration with an identical dump harness and diffed row by row. The old surface's SHA-256 reproduced the recorded digest exactly, confirming the harness is byte-faithful to the test's hasher."
       }
     }
   ]

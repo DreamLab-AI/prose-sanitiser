@@ -84,6 +84,8 @@ fn is_strip_cp(codepoint: u32) -> bool {
         || VS_SUPPLEMENT.contains(&codepoint)
         || (0xE0001..=0xE007F).contains(&codepoint)
         || is_private_use(codepoint)
+        || tables::is_reserved_ignorable(codepoint)
+        || tables::is_noncharacter(codepoint)
 }
 
 /// Finer-grained inspect kind for strip-class codepoints.
@@ -91,9 +93,18 @@ fn strip_kind(codepoint: u32) -> &'static str {
     if (0xE0001..=0xE007F).contains(&codepoint) {
         return "tag_chars";
     }
+    // Checked ahead of the private-use test: the plane-final noncharacters
+    // U+xFFFE/U+xFFFF sit just past the private-use planes, not inside them.
+    if tables::is_noncharacter(codepoint) {
+        return "noncharacter";
+    }
+    if tables::is_reserved_ignorable(codepoint) {
+        return "reserved_ignorable";
+    }
     if VS_SUPPLEMENT.contains(&codepoint)
         || (0xFE00..=0xFE0F).contains(&codepoint)
         || (0x180B..=0x180D).contains(&codepoint)
+        || codepoint == 0x180F
     {
         return "variation_selector";
     }
@@ -250,6 +261,8 @@ pub fn is_glue(codepoint: u32) -> bool {
         || tables::contains(MONGOLIAN_FVS, codepoint)
         || tables::contains(KHMER_VOWELS, codepoint)
         || tables::contains(HANGUL_FILLERS, codepoint)
+        || tables::is_blank_filler(codepoint)
+        || tables::is_layout_control(codepoint)
 }
 
 /// Classify one input unit for both inspect and clean.
@@ -271,6 +284,10 @@ pub fn decide(
         return keep;
     };
     let codepoint = character as u32;
+
+    let previous_codepoint = previous_kept
+        .and_then(Unit::as_char)
+        .map(|character| character as u32);
 
     if is_emoji_glue(codepoint) && !strip_emoji_glue && previous_is_emoji_base(previous_kept) {
         return keep;
@@ -301,6 +318,16 @@ pub fn decide(
         if tables::contains(HANGUL_FILLERS, codepoint)
             && previous_kept.map(is_hangul_jamo).unwrap_or(false)
         {
+            return keep;
+        }
+        // U+3164 and U+FFA0 are kept only after a jamo of their own
+        // presentation form, so partial-syllable text is not corrupted.
+        if tables::is_blank_filler_in_context(codepoint, previous_codepoint) {
+            return keep;
+        }
+        // Quadrat, shorthand and musical controls visibly govern their own
+        // script; stripping one next to that script would change the rendering.
+        if tables::is_layout_control_in_context(codepoint, previous_codepoint) {
             return keep;
         }
         if tables::contains(ORTHOGRAPHIC_CF, codepoint) {
@@ -477,11 +504,171 @@ mod tests {
     }
 
     #[test]
+    fn strips_reserved_default_ignorable_codepoints() {
+        // Category Cn, Other_Default_Ignorable_Code_Point=Yes: invisible to a
+        // conformant renderer and invisible to a Cf catch-all.
+        for cp in [
+            0x2065u32, 0xFFF0, 0xFFF4, 0xFFF8, 0xE0000, 0xE0080, 0xE00FF, 0xE01F0, 0xE0FFF,
+        ] {
+            let character = char::from_u32(cp).expect("assigned scalar value");
+            let decision = decide_char(character, Some('a'));
+            assert_eq!(
+                decision.action,
+                Action::Strip,
+                "U+{cp:04X} must be stripped"
+            );
+            assert_eq!(decision.kind, Some("reserved_ignorable"), "U+{cp:04X}");
+        }
+    }
+
+    #[test]
+    fn reserved_ignorable_ranges_stop_at_their_neighbours() {
+        // U+2064 INVISIBLE PLUS and U+2066 LRI are their own kinds already.
+        assert_eq!(decide_char('\u{2064}', None).kind, Some("strip"));
+        assert_eq!(decide_char('\u{2066}', None).kind, Some("bidi"));
+        // U+FFF9 is an interlinear annotation anchor, not reserved.
+        assert_eq!(decide_char('\u{FFF9}', None).kind, Some("strip"));
+        // U+E0001 is a tag character and U+E0100 a supplementary selector.
+        assert_eq!(decide_char('\u{E0001}', None).kind, Some("tag_chars"));
+        assert_eq!(
+            decide_char('\u{E0100}', None).kind,
+            Some("variation_selector")
+        );
+    }
+
+    #[test]
+    fn strips_all_sixty_six_noncharacters() {
+        let mut seen = 0;
+        for cp in 0xFDD0u32..=0xFDEF {
+            let character = char::from_u32(cp).expect("noncharacters are scalar values");
+            let decision = decide_char(character, Some('a'));
+            assert_eq!(decision.action, Action::Strip, "U+{cp:04X}");
+            assert_eq!(decision.kind, Some("noncharacter"), "U+{cp:04X}");
+            seen += 1;
+        }
+        // U+xFFFE and U+xFFFF at the end of each of the 17 planes.
+        for plane in 0u32..=0x10 {
+            for low in [0xFFFEu32, 0xFFFF] {
+                let cp = plane << 16 | low;
+                let character = char::from_u32(cp).expect("noncharacters are scalar values");
+                let decision = decide_char(character, Some('a'));
+                assert_eq!(decision.action, Action::Strip, "U+{cp:04X}");
+                assert_eq!(decision.kind, Some("noncharacter"), "U+{cp:04X}");
+                seen += 1;
+            }
+        }
+        assert_eq!(seen, 32 + 34, "the noncharacter count is fixed at 66");
+    }
+
+    #[test]
+    fn noncharacter_neighbours_are_untouched() {
+        // U+FDCF and U+FDF0 bracket the FDD0..FDEF block and are assigned.
+        assert_eq!(decide_char('\u{FDCF}', None).action, Action::Keep);
+        assert_eq!(decide_char('\u{FDF0}', None).action, Action::Keep);
+        // A plane-final noncharacter must not be reported as private use.
+        assert_eq!(decide_char('\u{FFFFE}', None).kind, Some("noncharacter"));
+        assert_eq!(decide_char('\u{FFFFD}', None).kind, Some("private_use"));
+    }
+
+    #[test]
+    fn strips_blank_rendering_carriers_out_of_context() {
+        // Mn/Lo categories, so the Cf catch-all never saw these three.
+        assert_eq!(
+            decide_char('\u{180F}', Some('a')).kind,
+            Some("variation_selector")
+        );
+        assert_eq!(decide_char('\u{3164}', Some('a')).kind, Some("strip"));
+        assert_eq!(decide_char('\u{FFA0}', Some('a')).kind, Some("strip"));
+    }
+
+    #[test]
+    fn keeps_blank_carriers_next_to_their_own_script() {
+        // FVS4 after a Mongolian letter, exactly like FVS1-3.
+        assert_eq!(
+            decide_char('\u{180F}', Some('\u{1820}')).action,
+            Action::Keep
+        );
+        // U+3164 after a compatibility jamo; U+FFA0 after a halfwidth jamo.
+        assert_eq!(
+            decide_char('\u{3164}', Some('\u{3131}')).action,
+            Action::Keep
+        );
+        assert_eq!(
+            decide_char('\u{FFA0}', Some('\u{FFA1}')).action,
+            Action::Keep
+        );
+    }
+
+    #[test]
+    fn blank_carriers_need_their_own_presentation_form() {
+        // A conjoining jamo is the wrong form for the compatibility filler, and
+        // a compatibility jamo is the wrong form for the halfwidth filler.
+        assert_eq!(
+            decide_char('\u{3164}', Some('\u{1100}')).action,
+            Action::Strip
+        );
+        assert_eq!(
+            decide_char('\u{FFA0}', Some('\u{3131}')).action,
+            Action::Strip
+        );
+    }
+
+    #[test]
+    fn keeps_layout_controls_next_to_their_own_script() {
+        // Egyptian quadrat control after a hieroglyph, Duployan overlap control
+        // after a Duployan letter, musical beam after a musical symbol.
+        assert_eq!(
+            decide_char('\u{13430}', Some('\u{13000}')).action,
+            Action::Keep
+        );
+        assert_eq!(
+            decide_char('\u{1BCA0}', Some('\u{1BC00}')).action,
+            Action::Keep
+        );
+        assert_eq!(
+            decide_char('\u{1D173}', Some('\u{1D100}')).action,
+            Action::Keep
+        );
+    }
+
+    #[test]
+    fn strips_layout_controls_floating_between_unrelated_text() {
+        for (control, kind) in [
+            ('\u{13430}', "other_cf"),
+            ('\u{1BCA0}', "other_cf"),
+            ('\u{1D173}', "other_cf"),
+        ] {
+            let decision = decide_char(control, Some('a'));
+            assert_eq!(decision.action, Action::Strip);
+            assert_eq!(decision.kind, Some(kind));
+        }
+    }
+
+    #[test]
+    fn paranoid_mode_strips_layout_controls_even_in_context() {
+        let stripped = decide(
+            Unit::Char('\u{13430}'),
+            Some(Unit::Char('\u{13000}')),
+            true,
+            false,
+            true,
+        );
+        assert_eq!(stripped.action, Action::Strip);
+    }
+
+    #[test]
     fn unlisted_format_characters_fall_through_to_other_cf() {
-        // U+1D173 (MUSICAL SYMBOL BEGIN BEAM) is Cf but in none of the tables.
+        // U+1D173 (MUSICAL SYMBOL BEGIN BEAM) is Cf but in none of the tables,
+        // so opening the text with it — governing nothing — is still contraband.
         assert_eq!(decide_char('\u{1D173}', None).kind, Some("other_cf"));
-        // U+2065 is unassigned (Cn), not Cf, so it is left alone.
-        assert_eq!(decide_char('\u{2065}', None).action, Action::Keep);
+        // U+2065 is unassigned (Cn) rather than Cf, so the catch-all above never
+        // sees it. It used to be kept for exactly that reason; it is now caught
+        // by the reserved-ignorable rule instead.
+        assert_eq!(decide_char('\u{2065}', None).action, Action::Strip);
+        assert_eq!(
+            decide_char('\u{2065}', None).kind,
+            Some("reserved_ignorable")
+        );
     }
 
     #[test]

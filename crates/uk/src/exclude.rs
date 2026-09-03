@@ -273,12 +273,13 @@ fn paths(document: &str) -> Vec<(usize, usize)> {
             // `./docs` starts with one and losing it would lose the strongest
             // signal the token has.
             let token = hit.as_str();
-            let lead = token.len() - token.trim_start_matches(['(', '[', '{', '<', '"', '\'']).len();
-            let trimmed = token[lead..].trim_end_matches([
-                '.', ',', ';', ':', '!', '?', ')', ']', '}', '>', '"', '\'',
-            ]);
-            is_path_like(trimmed)
-                .then(|| (hit.start() + lead, hit.start() + lead + trimmed.len()))
+            let lead = token.len()
+                - token
+                    .trim_start_matches(['(', '[', '{', '<', '"', '\''])
+                    .len();
+            let trimmed = token[lead..]
+                .trim_end_matches(['.', ',', ';', ':', '!', '?', ')', ']', '}', '>', '"', '\'']);
+            is_path_like(trimmed).then(|| (hit.start() + lead, hit.start() + lead + trimmed.len()))
         })
         .collect()
 }

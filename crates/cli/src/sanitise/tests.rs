@@ -381,22 +381,46 @@ fn filler(words: usize) -> String {
 fn rule_fixtures() -> Vec<(&'static str, String)> {
     let mut fixtures: Vec<(&'static str, String)> = [
         ("preamble-label", "Put simply, the deployment failed.\n"),
-        ("insider-voice", "The wording leaves us room to move later.\n"),
-        ("tier1-vocab", "We delve into the robust and seamless design.\n"),
+        (
+            "insider-voice",
+            "The wording leaves us room to move later.\n",
+        ),
+        (
+            "tier1-vocab",
+            "We delve into the robust and seamless design.\n",
+        ),
         ("the-heading", "# The deployment pipeline\n"),
         ("the-opener", "The pipeline failed twice this week.\n"),
         (
             "negative-parallelism",
             "This is not just a change of tooling, but a change of habit.\n",
         ),
-        ("throat-clearing", "In the world of deployment, timing matters.\n"),
-        ("sycophantic-filler", "Great question, and the answer is no.\n"),
+        (
+            "throat-clearing",
+            "In the world of deployment, timing matters.\n",
+        ),
+        (
+            "sycophantic-filler",
+            "Great question, and the answer is no.\n",
+        ),
         ("claudish-filler", "Let's break this down into its parts.\n"),
         ("hedge-words", "It is basically a rounding error.\n"),
-        ("copula-substitution", "The release marks the end of the migration.\n"),
-        ("passive-tell", "It should be noted that the build was red.\n"),
-        ("claudish-structure", "Think of it as a queue with one reader.\n"),
-        ("bold-label-bullet", "- **Latency**: the number that moved.\n"),
+        (
+            "copula-substitution",
+            "The release marks the end of the migration.\n",
+        ),
+        (
+            "passive-tell",
+            "It should be noted that the build was red.\n",
+        ),
+        (
+            "claudish-structure",
+            "Think of it as a queue with one reader.\n",
+        ),
+        (
+            "bold-label-bullet",
+            "- **Latency**: the number that moved.\n",
+        ),
         ("us-spelling", "The color of the panel was wrong.\n"),
         ("us-spelling-sense", "We must practice restraint here.\n"),
     ]
@@ -420,7 +444,9 @@ fn rule_fixtures() -> Vec<(&'static str, String)> {
     ));
     fixtures.push((
         "structural-negative-parallelism-density",
-        format!("{pad}\nIt is not just faster, but cheaper. It is not only smaller, but simpler.\n"),
+        format!(
+            "{pad}\nIt is not just faster, but cheaper. It is not only smaller, but simpler.\n"
+        ),
     ));
     fixtures.push((
         "structural-tricolon-density",
@@ -450,7 +476,9 @@ fn rule_fixtures() -> Vec<(&'static str, String)> {
         "structural-paragraph-uniformity",
         // Five paragraphs of identical length, which is what the measure wants
         // and what real documents almost never have.
-        std::iter::repeat_n(filler(60), 6).collect::<Vec<_>>().join("\n\n"),
+        std::iter::repeat_n(filler(60), 6)
+            .collect::<Vec<_>>()
+            .join("\n\n"),
     ));
     fixtures
 }
@@ -619,4 +647,3 @@ fn no_slop_rule_is_write_eligible() {
         );
     }
 }
-

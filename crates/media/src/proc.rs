@@ -158,8 +158,10 @@ pub fn run_capture(
             if libc::setpgid(0, 0) != 0 {
                 // Not fatal: the kill will just target the child alone.
             }
-            set_rlimit(libc::RLIMIT_AS, limits.address_space)?;
-            set_rlimit(libc::RLIMIT_FSIZE, limits.file_size)?;
+            // `as _`: glibc types RLIMIT_* as an unsigned typedef, musl and
+            // Darwin as c_int; the cast lets one call site serve all three.
+            set_rlimit(libc::RLIMIT_AS as _, limits.address_space)?;
+            set_rlimit(libc::RLIMIT_FSIZE as _, limits.file_size)?;
             Ok(())
         });
     }
@@ -199,12 +201,12 @@ pub fn run_capture(
         }
     };
 
-    let stdout = stdout_handle.join().map_err(|_| {
-        RunError::Spawn(io::Error::other("stdout reader panicked"))
-    })??;
-    let stderr = stderr_handle.join().map_err(|_| {
-        RunError::Spawn(io::Error::other("stderr reader panicked"))
-    })??;
+    let stdout = stdout_handle
+        .join()
+        .map_err(|_| RunError::Spawn(io::Error::other("stdout reader panicked")))??;
+    let stderr = stderr_handle
+        .join()
+        .map_err(|_| RunError::Spawn(io::Error::other("stderr reader panicked")))??;
 
     Ok(Output {
         status,
@@ -214,10 +216,7 @@ pub fn run_capture(
 }
 
 /// Read up to `cap` bytes from a pipe, returning an error if exceeded.
-fn drain_capped(
-    pipe: Option<impl io::Read>,
-    cap: usize,
-) -> Result<Vec<u8>, RunError> {
+fn drain_capped(pipe: Option<impl io::Read>, cap: usize) -> Result<Vec<u8>, RunError> {
     let Some(mut reader) = pipe else {
         return Ok(Vec::new());
     };
@@ -246,13 +245,14 @@ fn kill_group(child: &std::process::Child) {
 }
 
 /// `setrlimit` with error propagation. Returns `Err` if the kernel refuses.
-fn set_rlimit(resource: u32, value: u64) -> io::Result<()> {
+fn set_rlimit(resource: libc::c_int, value: u64) -> io::Result<()> {
     let limit = libc::rlimit {
         rlim_cur: value as libc::rlim_t,
         rlim_max: value as libc::rlim_t,
     };
     // SAFETY: `limit` is a fully initialised, correctly typed rlimit.
-    let result = unsafe { libc::setrlimit(resource, &limit) };
+    // The resource type differs by libc (see the call site), hence the cast.
+    let result = unsafe { libc::setrlimit(resource as _, &limit) };
     if result != 0 {
         return Err(io::Error::last_os_error());
     }

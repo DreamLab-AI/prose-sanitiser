@@ -23,6 +23,9 @@ external-verify = []
 [dependencies]
 prose-sanitiser-core = { workspace = true }
 prose-sanitiser-unicode = { workspace = true }
+# Bounded zlib inflate for PNG zTXt/iTXt payloads. Every call goes through the
+# capped reader in `image::png`; this crate never inflates without a budget.
+flate2 = { workspace = true }
 libc = { workspace = true }
 quick-xml = { workspace = true }
 regex = { workspace = true }
