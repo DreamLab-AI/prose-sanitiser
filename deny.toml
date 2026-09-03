@@ -8,7 +8,19 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
-ignore = []
+# Both reach us only through `c2pa` (prose-sanitiser-media), which this crate
+# uses to *read* Content Credentials manifests. Neither is reachable from our
+# code paths; both are tracked upstream and the ignore is removed when c2pa
+# drops the dependency.
+ignore = [
+    # rsa: Marvin Attack timing side-channel. Only used by c2pa for signature
+    # verification of manifests we inspect; we never hold or use an RSA private
+    # key, so there is no key to recover.
+    { id = "RUSTSEC-2023-0071", reason = "rsa via c2pa; verification-only, no private key material in this process" },
+    # proc-macro-error is unmaintained: a compile-time proc-macro dependency of
+    # static-iref (via c2pa); no runtime code.
+    { id = "RUSTSEC-2024-0370", reason = "proc-macro-error via c2pa -> static-iref; compile-time only" },
+]
 
 [licenses]
 version = 2
