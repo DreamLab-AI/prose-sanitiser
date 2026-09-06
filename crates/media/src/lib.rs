@@ -84,6 +84,8 @@
 //!   pixel buffers**, and the compressed image data (PNG `IDAT`, the JPEG
 //!   entropy-coded scan) is carried across verbatim.
 
+#![deny(missing_docs)]
+
 pub mod container;
 pub mod image;
 pub mod io;

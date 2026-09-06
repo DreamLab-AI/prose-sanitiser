@@ -13,6 +13,8 @@
 //! - `POST /inspect`      -> `{"file": <base64>, "name": "x.png"}` -> findings
 //! - `POST /clean`        -> `{"file": ..., "options": {...}}` -> cleaned bytes
 
+#![deny(missing_docs)]
+
 pub mod openapi;
 
 use std::path::{Path, PathBuf};
@@ -47,11 +49,13 @@ pub fn version() -> &'static str {
 pub struct Version;
 
 impl Version {
+    /// The advertised version string, identical to [`version()`].
     pub fn as_str(&self) -> &'static str {
         version()
     }
 }
 
+/// The singleton [`Version`] handle the OpenAPI module reads.
 pub const VERSION: Version = Version;
 
 /// The clean options the service accepts, and whether each is a boolean.
@@ -74,6 +78,8 @@ pub fn max_body_bytes() -> usize {
 /// Runtime state: the bearer token, when one is configured.
 #[derive(Clone, Default)]
 pub struct ServerState {
+    /// The bearer token every request must present, or `None` when the
+    /// service is running unauthenticated on a loopback bind.
     pub api_key: Option<String>,
 }
 
@@ -365,7 +371,10 @@ async fn not_found() -> Response {
 /// A handler failure, split by the status it maps to.
 #[derive(Debug)]
 pub enum HandlerError {
+    /// The caller's fault: malformed envelope, unsupported option or input
+    /// over the cap. Maps to `400`, and the message is returned to the caller.
     BadRequest(String),
+    /// The service's fault: an I/O or pipeline failure. Maps to `500`.
     Internal(String),
 }
 

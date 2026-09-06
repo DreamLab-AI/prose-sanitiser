@@ -1,4 +1,11 @@
 # CI: format, lint, test, and a supply-chain gate on every push and PR.
+#
+# Every job builds with `--all-features`. The optional `external-verify` feature
+# in prose-sanitiser-media gates six cfg blocks; without this flag CI never
+# compiles them, so they would rot unnoticed. The gated code degrades when a
+# tool is absent rather than requiring one, and the tests assert the shape of
+# the tool report rather than any tool's presence, so this is safe on a bare
+# runner.
 name: CI
 
 on:
@@ -23,9 +30,9 @@ jobs:
           rustup toolchain install stable --profile minimal --component rustfmt,clippy --no-self-update
           rustup default stable
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets --locked
-      - run: cargo test --workspace --locked
-      - run: cargo doc --workspace --no-deps --locked
+      - run: cargo clippy --workspace --all-targets --all-features --locked
+      - run: cargo test --workspace --all-features --locked
+      - run: cargo doc --workspace --no-deps --all-features --locked
         env:
           RUSTDOCFLAGS: -D warnings
 
@@ -52,4 +59,4 @@ jobs:
         run: |
           rustup toolchain install ${{ steps.msrv.outputs.version }} --profile minimal --no-self-update
           rustup default ${{ steps.msrv.outputs.version }}
-      - run: cargo test --workspace --locked --no-run
+      - run: cargo test --workspace --all-features --locked --no-run

@@ -25,13 +25,21 @@ type UkHit = (String, String, usize, usize, usize, Option<String>);
 /// One reported tell.
 #[derive(Debug, Clone)]
 pub struct Finding {
+    /// The stable identifier of the rule that fired, as listed in
+    /// [`crate::rules::RULES`].
     pub rule: String,
+    /// The rule's human-readable name, as shown in the terminal report.
     pub label: String,
+    /// How strongly this tell signals AI authorship.
     pub severity: Severity,
+    /// The suggested remedy, in prose. Advice for an editor, not a patch:
+    /// see [`Finding::replacement`] for the machine-applicable form.
     pub fix: String,
+    /// The scanned file's path, as given to the scan.
     pub file: String,
     /// 1-based; zero for a whole-file aggregate.
     pub line: usize,
+    /// The matching line, trimmed for display.
     pub snippet: String,
     /// 1-based column of the match within the line; zero for an aggregate.
     ///
@@ -58,6 +66,11 @@ pub struct Finding {
 }
 
 impl Finding {
+    /// The compact JSON object used by the `slop-scan` report.
+    ///
+    /// Deliberately narrower than the struct: `column`, the byte offsets and
+    /// `replacement` are carried by [`Finding::to_report_entry`] instead,
+    /// because this shape is fixed by every consumer that already diffs it.
     pub fn to_json(&self) -> Value {
         json!({
             "rule": self.rule,
@@ -497,13 +510,17 @@ pub fn verdict(high: u32, weighted: u32) -> &'static str {
 
 /// A completed scan over one path.
 pub struct ScanResult {
+    /// Every tell found, in file then line order.
     pub findings: Vec<Finding>,
+    /// How many files the scan actually read, after skips and filters.
     pub files_scanned: usize,
     /// Per-file structural measures, empty unless the scan asked for them.
     pub structural: Vec<(String, StructuralMetrics)>,
 }
 
 impl ScanResult {
+    /// Findings tallied per severity, always in high, medium, low order so a
+    /// caller can index the array rather than search it.
     pub fn counts(&self) -> [(Severity, u32); 3] {
         let mut counts = [
             (Severity::High, 0),
@@ -520,10 +537,15 @@ impl ScanResult {
         counts
     }
 
+    /// How many high-severity (Tier-1) tells were found.
     pub fn high(&self) -> u32 {
         self.counts()[0].1
     }
 
+    /// The total score, each finding counted at its severity's weight.
+    ///
+    /// This is what separates one strong tell from a drift of weak ones; the
+    /// verdict reads both numbers rather than either alone.
     pub fn weighted(&self) -> u32 {
         self.counts()
             .iter()
@@ -531,6 +553,8 @@ impl ScanResult {
             .sum()
     }
 
+    /// The one-line human verdict for this scan, derived from the high count
+    /// and the weighted score.
     pub fn verdict(&self) -> &'static str {
         verdict(self.high(), self.weighted())
     }

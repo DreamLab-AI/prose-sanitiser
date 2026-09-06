@@ -49,6 +49,8 @@
 //! `prose-sanitiser-uk`; [`rules`] references its constants so the two cannot
 //! drift.
 
+#![deny(missing_docs)]
+
 pub mod check;
 pub mod design;
 pub mod prose;

@@ -16,11 +16,22 @@ use serde_json::Value;
 
 use net::{join_url, url_origin, validated_target, UrlOrigin};
 
+/// Default per-asset download budget, 4 MiB. A response over this is
+/// abandoned rather than truncated, so a partial file is never inspected.
 pub const DEFAULT_MAX_BYTES: usize = 4 << 20;
+/// Default per-request timeout, in seconds.
 pub const DEFAULT_TIMEOUT: u64 = 15;
+/// Default cap on pages visited in one crawl.
 pub const DEFAULT_MAX_PAGES: usize = 200;
+/// Hard cap on a decompressed `sitemap.xml.gz`, 64 MiB.
+///
+/// Not configurable: this is the zip-bomb guard, and the inflate is stopped at
+/// this budget rather than after the fact.
 pub const MAX_SITEMAP_DECOMPRESSED_BYTES: usize = 64 << 20;
+/// How many redirects one request will follow before giving up. Each hop is
+/// re-validated against the origin, so a redirect cannot leave the site.
 pub const MAX_REDIRECTS: usize = 5;
+/// The `User-Agent` the crawler identifies itself with.
 pub const USER_AGENT: &str = "remove-ai-marks-audit/1.0";
 
 /// Extensions used when staging a downloaded asset for the local pipeline.

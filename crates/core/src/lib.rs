@@ -31,6 +31,8 @@
 //! detectors live in `prose-sanitiser-unicode`, `prose-sanitiser-uk` and
 //! `prose-sanitiser-slop`.
 
+#![deny(missing_docs)]
+
 pub mod binary;
 pub mod confidence;
 pub mod config;
@@ -65,11 +67,24 @@ pub use traits::{Check, Fix};
 /// same pair so every binary's `main` can stay a three-line shim.
 #[derive(Debug, Clone)]
 pub struct CliError {
+    /// The process exit code to terminate with. Conventionally `1` for a
+    /// usage or input error and `2` for a failed check.
     pub code: i32,
+    /// The single line written to stderr before exiting. No trailing newline.
     pub message: String,
 }
 
 impl CliError {
+    /// Builds an error carrying `code` as the process exit status and
+    /// `message` as the stderr line.
+    ///
+    /// ```
+    /// use prose_sanitiser_core::CliError;
+    ///
+    /// let err = CliError::new(2, "input is not valid UTF-8");
+    /// assert_eq!(err.code, 2);
+    /// assert_eq!(err.to_string(), "input is not valid UTF-8");
+    /// ```
     pub fn new(code: i32, message: impl Into<String>) -> Self {
         Self {
             code,

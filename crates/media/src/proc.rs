@@ -32,6 +32,9 @@ pub fn ctrlregen_rlimit_as() -> u64 {
     env_usize("WATERMARKS_CTRLREGEN_RLIMIT_AS", 32 << 30) as u64
 }
 
+/// File-size cap for a pixel-remover child, default 2 GiB.
+///
+/// Override with `WATERMARKS_CTRLREGEN_RLIMIT_FSIZE`.
 pub fn ctrlregen_rlimit_fsize() -> u64 {
     env_usize("WATERMARKS_CTRLREGEN_RLIMIT_FSIZE", 2 << 30) as u64
 }
@@ -39,7 +42,9 @@ pub fn ctrlregen_rlimit_fsize() -> u64 {
 /// Resource caps applied inside a child between fork and exec.
 #[derive(Debug, Clone, Copy)]
 pub struct Rlimits {
+    /// `RLIMIT_AS`: the child's maximum virtual memory, in bytes.
     pub address_space: u64,
+    /// `RLIMIT_FSIZE`: the largest file the child may write, in bytes.
     pub file_size: u64,
 }
 
@@ -101,7 +106,9 @@ pub const MAX_OUTPUT_BYTES: usize = 64 << 20; // 64 MiB
 /// Why a child run did not produce output.
 #[derive(Debug)]
 pub enum RunError {
+    /// The child could not be started at all — typically a missing binary.
     Spawn(io::Error),
+    /// The child exceeded its wall-clock budget and was killed.
     TimedOut(Duration),
     /// `setrlimit` failed in the child pre-exec hook.
     RlimitFailed(io::Error),

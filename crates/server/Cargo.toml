@@ -6,6 +6,12 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "HTTP service exposing the prose-sanitiser cleaning pipeline."
+keywords = ["sanitiser", "provenance", "http", "axum", "service"]
+categories = ["web-programming::http-server", "text-processing"]
+readme = "README.md"
+# Not published: this is the deployment surface, not a reusable library. The
+# metadata above is kept complete anyway so the crate is described identically
+# to its published siblings in any workspace-wide inventory.
 publish = false
 autobins = false
 

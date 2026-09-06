@@ -161,11 +161,19 @@ pub fn run_synthid_score(path: &Path, upstream_dir: Option<&str>) -> Option<Valu
 /// CtrlRegen invocation settings.
 #[derive(Debug, Clone)]
 pub struct CtrlRegenOptions {
+    /// Directory holding the upstream CtrlRegen checkout. `None` disables the
+    /// remover: this crate never downloads a model.
     pub upstream_dir: Option<String>,
+    /// Regeneration strength in 0.0..=1.0. Higher removes more of the pixel
+    /// watermark and departs further from the original image.
     pub strength: f64,
+    /// Diffusion steps. More steps cost time for a closer reconstruction.
     pub steps: u32,
+    /// Torch device string (`cuda`, `cpu`, …). `None` lets upstream choose.
     pub device: Option<String>,
+    /// Seed for a reproducible run. `None` leaves the run nondeterministic.
     pub seed: Option<i64>,
+    /// Wall-clock cap on the child process, after which it is killed.
     pub timeout_secs: u64,
 }
 
@@ -246,12 +254,22 @@ pub fn run_ctrlregen_clean(path: &Path, output: &Path, options: &CtrlRegenOption
 /// MarkDiffusion DiffusionPurification invocation settings.
 #[derive(Debug, Clone)]
 pub struct MarkDiffusionOptions {
+    /// Directory holding the upstream MarkDiffusion checkout. `None` disables
+    /// the remover: this crate never downloads a model.
     pub upstream_dir: Option<String>,
+    /// Purification strength in 0.0..=1.0 — how far the image is noised before
+    /// being denoised back.
     pub strength: f64,
+    /// Diffusion model identifier to purify with. `None` uses upstream's
+    /// default.
     pub model: Option<String>,
+    /// Working resolution in pixels for the purification pass.
     pub size: u32,
+    /// Denoising steps.
     pub steps: u32,
+    /// Torch device string (`cuda`, `cpu`, …). `None` lets upstream choose.
     pub device: Option<String>,
+    /// Wall-clock cap on the child process, after which it is killed.
     pub timeout_secs: u64,
 }
 

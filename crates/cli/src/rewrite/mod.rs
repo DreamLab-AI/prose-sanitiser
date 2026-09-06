@@ -188,12 +188,24 @@ pub fn build_prompt(
 /// Which backend performs the rewrite.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Backend {
+    /// Emit the assembled prompt and stop. The default, and the only backend
+    /// that contacts nothing: the caller runs the model itself.
     PrintPrompt,
+    /// A local Ollama daemon over its native API.
     Ollama,
+    /// Any OpenAI-compatible `/v1/chat/completions` endpoint. Still refuses a
+    /// non-loopback base URL unless [`RewriteOptions::allow_remote`] is set.
     OpenAiCompatible,
 }
 
 impl Backend {
+    /// The lowercase wire form used on the command line and in reports.
+    ///
+    /// ```
+    /// use prose_sanitiser::rewrite::Backend;
+    ///
+    /// assert_eq!(Backend::Ollama.as_str(), "ollama");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Backend::PrintPrompt => "print-prompt",
@@ -202,6 +214,15 @@ impl Backend {
         }
     }
 
+    /// The inverse of [`Backend::as_str`], returning `None` for anything the
+    /// CLI does not accept.
+    ///
+    /// ```
+    /// use prose_sanitiser::rewrite::Backend;
+    ///
+    /// assert_eq!(Backend::parse("print-prompt"), Some(Backend::PrintPrompt));
+    /// assert_eq!(Backend::parse("anthropic"), None);
+    /// ```
     pub fn parse(value: &str) -> Option<Self> {
         match value {
             "print-prompt" => Some(Backend::PrintPrompt),
@@ -215,21 +236,46 @@ impl Backend {
 /// Everything a rewrite run needs.
 #[derive(Debug, Clone)]
 pub struct RewriteOptions {
+    /// Which backend performs the rewrite. Defaults to
+    /// [`Backend::PrintPrompt`], which contacts nothing.
     pub backend: Backend,
+    /// Model identifier passed to the backend. `None` uses the backend's own
+    /// default.
     pub model: Option<String>,
+    /// Base URL of the endpoint. `None` uses the backend's default, which is
+    /// loopback for both network backends.
     pub base_url: Option<String>,
+    /// Bearer token for an OpenAI-compatible endpoint that requires one.
     pub api_key: Option<String>,
+    /// Which rewrite prompt to use — one of
+    /// [`STRENGTHS`](prompts::STRENGTHS).
     pub strength: String,
+    /// Target language tag for the rewrite output.
     pub lang: String,
+    /// The source text's language tag, used by the backtranslate strength.
     pub original_lang: String,
+    /// Per-request timeout in seconds.
     pub timeout: f64,
+    /// Re-run the Layer A Unicode surgery over the model's output. Worth
+    /// keeping on: a model can reintroduce the carriers that were just removed.
     pub layer_a_after: bool,
+    /// Sampling temperature passed to the backend.
     pub temperature: f64,
+    /// How many candidate rewrites to request before selecting one.
     pub candidates: u32,
+    /// Permit a non-loopback `base_url`. Off by default, so text cannot leave
+    /// the machine without an explicit opt-in.
     pub allow_remote: bool,
+    /// Reasoning-effort hint for backends that accept one. `None` omits it.
     pub reasoning_effort: Option<String>,
+    /// MarkLLM adapter settings, enabling the LLM-watermark pass. `None`
+    /// skips it.
     pub markllm: Option<MarkllmOptions>,
+    /// The originating question or prompt, appended so the model can tell what
+    /// the text is for. Clipped to 800 characters.
     pub context: Option<String>,
+    /// Inputs shorter than this are returned unchanged: a rewrite of a
+    /// fragment costs more in meaning than it recovers in style.
     pub min_chars: usize,
 }
 

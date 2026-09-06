@@ -58,6 +58,15 @@ pub const STRENGTHS: &[&str] = &[
     "declaudish",
 ];
 
+/// The prompt template for a named strength, or `None` when the name is not
+/// one of [`STRENGTHS`].
+///
+/// ```
+/// use prose_sanitiser::rewrite::prompts;
+///
+/// assert!(prompts::lookup("humanize").is_some());
+/// assert!(prompts::lookup("embellish").is_none());
+/// ```
 pub fn lookup(name: &str) -> Option<&'static str> {
     PROMPTS
         .iter()

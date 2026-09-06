@@ -78,6 +78,8 @@
 //! unconditionally, because everything they touch is `CertainMechanical` and
 //! the result is verifiable by diffing the output.
 
+#![deny(missing_docs)]
+
 pub mod audit;
 pub mod dispatch;
 pub mod exit;

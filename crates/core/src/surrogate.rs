@@ -9,7 +9,11 @@
 /// One decoded position: either a real character or an undecodable raw byte.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Unit {
+    /// A position that decoded as valid UTF-8.
     Char(char),
+    /// A byte that could not be decoded, preserved verbatim so that an
+    /// encode of the units reproduces the input exactly. This is the Rust
+    /// stand-in for Python's lone-surrogate `surrogateescape` representation.
     Raw(u8),
 }
 

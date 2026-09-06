@@ -361,7 +361,9 @@ fn read_zero_width_run(units: &[Unit], start: usize) -> (usize, Option<Payload>)
     // Most significant bit first, dropping a trailing partial byte: fewer than
     // eight bits carry nothing recoverable.
     let bytes: Vec<u8> = bits
-        .chunks_exact(8)
+        .as_chunks::<8>()
+        .0
+        .iter()
         .map(|chunk| chunk.iter().fold(0u8, |acc, &bit| (acc << 1) | bit))
         .collect();
     (

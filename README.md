@@ -273,7 +273,9 @@ house-style budgets and labelled accordingly.
 
 **MIT OR Apache-2.0**, at your option.
 
-Copyright (c) 2026 DreamLab AI Consulting Ltd and contributors.
+Copyright (c) 2026 DreamLab AI Consulting Ltd and contributors. The full texts
+are in [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE), and
+both are carried beside every crate and inside every published archive.
 
 Vendored VarCon data (in `prose-sanitiser-uk`) keeps its own permissive notice;
 see `crates/uk/data/LICENSE-VarCon`.

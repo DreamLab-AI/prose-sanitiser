@@ -1,0 +1,412 @@
+{
+  "schema": "prose-sanitiser/release-receipt/1",
+  "date": "2026-09-05",
+  "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+  "owner": "jjohare",
+  "publication_performed": false,
+  "publication_note": "No cargo publish, no commit, no push ran. Archives were built locally with `cargo package` for inspection and digesting only.",
+  "source": {
+    "head_commit": "422fc824540b29c5ddfd5ded732a96b4ba3a938f",
+    "head_date": "2026-09-03 21:32:02 +0000",
+    "head_subject": "0.1.1: portability, MSRV honesty, and three invisible-carrier classes",
+    "working_tree_clean": false,
+    "uncommitted_diff_sha256": "d143b0952fe6d6a1f0227a92b5da16ea8a47d0b5df9e3718c91179340decb818",
+    "uncommitted_files": [
+      ".github/workflows/ci.yml",
+      "README.md",
+      "crates/cli/README.md",
+      "crates/cli/src/audit/website/mod.rs",
+      "crates/cli/src/audit/website/net.rs",
+      "crates/cli/src/dispatch.rs",
+      "crates/cli/src/lib.rs",
+      "crates/cli/src/rewrite/markllm.rs",
+      "crates/cli/src/rewrite/mod.rs",
+      "crates/cli/src/rewrite/prompts.rs",
+      "crates/core/README.md",
+      "crates/core/src/binary.rs",
+      "crates/core/src/confidence.rs",
+      "crates/core/src/finding/mod.rs",
+      "crates/core/src/lib.rs",
+      "crates/core/src/surrogate.rs",
+      "crates/media/README.md",
+      "crates/media/src/container/mod.rs",
+      "crates/media/src/image/harness.rs",
+      "crates/media/src/image/mod.rs",
+      "crates/media/src/io.rs",
+      "crates/media/src/lib.rs",
+      "crates/media/src/proc.rs",
+      "crates/server/Cargo.toml",
+      "crates/server/README.md",
+      "crates/server/src/lib.rs",
+      "crates/slop/README.md",
+      "crates/slop/src/design/mod.rs",
+      "crates/slop/src/design/rules.rs",
+      "crates/slop/src/lib.rs",
+      "crates/slop/src/prose/mod.rs",
+      "crates/slop/src/rules/table.rs",
+      "crates/uk/README.md",
+      "crates/unicode/README.md",
+      "crates/unicode/src/stego.rs"
+    ],
+    "binding_note": "Archive digests below are of the WORKING TREE (head_commit plus uncommitted_diff_sha256 over tracked files, plus the untracked files listed), not of head_commit alone. The diff digest covers tracked modifications only; this receipt and its siblings are untracked additions and are therefore listed separately rather than folded into the digest. Neither the untracked docs nor .github/workflows/ci.yml affect any crate archive: cargo packages only files under each crate directory, which is why rebuilding after the repository-root edits reproduced identical digests.",
+    "untracked_added_files": [
+      "docs/estate-closeout/2026-09-05/acceptance.md",
+      "docs/release-receipts/2026-09-05.json",
+      "docs/release-receipts/2026-09-05.md"
+    ]
+  },
+  "lineage": {
+    "extracted_from": "https://github.com/DreamLab-AI/agentbox, path services/prose-sanitiser",
+    "agentbox_last_content_commit": "3c853e99cd2a4932077287c32a1826d9d6fe38e2",
+    "agentbox_last_content_subject": "prose-sanitiser: hardening pass 3 \u2014 review triage and fixes",
+    "agentbox_removal_commit": "38009c3f90fcc23266f73931bd6af936bffd903b",
+    "agentbox_removal_subject": "nix: consume prose-sanitiser and diagram-ir from their own repositories",
+    "this_repo_extraction_commit": "394a4e67b3dcc90d2401262413cdcb06151f2f3c",
+    "this_repo_join_commit": "3b545e1",
+    "proof": {
+      "method": "git tree-hash equality of the crates/ subtree across both repositories",
+      "agentbox_path": "3c853e9:services/prose-sanitiser/crates",
+      "this_repo_path": "3b545e1:crates",
+      "tree_sha1": "7a3ef0d9b45dc85409ea295f33de185a0cf8e584",
+      "identical": true
+    },
+    "agentbox_services_now": "services/prose-sanitiser is absent from agentbox HEAD; the eight-manifest local inventory correctly no longer counts it."
+  },
+  "manifest": {
+    "workspace_version": "0.1.1",
+    "edition": "2021",
+    "rust_version": "1.89",
+    "license": "MIT OR Apache-2.0",
+    "resolver": "2",
+    "members": 7,
+    "published_members": 6
+  },
+  "packages": [
+    {
+      "name": "prose-sanitiser-core",
+      "dir": "crates/core",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+      "rust_version": "1.89",
+      "readme": "README.md",
+      "keywords": [
+        "prose",
+        "linter",
+        "unicode",
+        "sanitiser",
+        "provenance"
+      ],
+      "categories": [
+        "text-processing",
+        "command-line-utilities"
+      ],
+      "publish": true,
+      "package_file_count": 25,
+      "package_list_sha256": "350ec91f491e3fd200ae888e5341027ee454a095db2a0b4941eadea02a706eb3",
+      "licence_texts_in_archive": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT"
+      ],
+      "readme_in_archive": true,
+      "archive": "prose-sanitiser-core-0.1.1.crate",
+      "archive_bytes": 46432,
+      "archive_sha256": "b70cc84571e9cfe88a8f07b37a88f93dbe224d14eacb77446dc992df53afc835"
+    },
+    {
+      "name": "prose-sanitiser-unicode",
+      "dir": "crates/unicode",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+      "rust_version": "1.89",
+      "readme": "README.md",
+      "keywords": [
+        "unicode",
+        "homoglyph",
+        "steganography",
+        "security",
+        "confusables"
+      ],
+      "categories": [
+        "text-processing",
+        "internationalization"
+      ],
+      "publish": true,
+      "package_file_count": 68,
+      "package_list_sha256": "b1f0e95fbeae94522a4d615d1c120a117f7261bd7564e4879252c31d8e5a0f9b",
+      "licence_texts_in_archive": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT"
+      ],
+      "readme_in_archive": true,
+      "archive": "prose-sanitiser-unicode-0.1.1.crate",
+      "archive_bytes": 70118,
+      "archive_sha256": "82d4d9d189df4030b2717959801fdb897f3048266d4d13d0aec7ea45d9fa8974"
+    },
+    {
+      "name": "prose-sanitiser-uk",
+      "dir": "crates/uk",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+      "rust_version": "1.89",
+      "readme": "README.md",
+      "keywords": [
+        "british",
+        "english",
+        "spelling",
+        "linter",
+        "prose"
+      ],
+      "categories": [
+        "text-processing",
+        "internationalization"
+      ],
+      "publish": true,
+      "package_file_count": 31,
+      "package_list_sha256": "5585c031fb98a49ce800d64f4f72d3fda2b6c1606e7c0a3dd28d3578f436aaed",
+      "licence_texts_in_archive": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT",
+        "LICENSE-VarCon"
+      ],
+      "readme_in_archive": true,
+      "archive": "prose-sanitiser-uk-0.1.1.crate",
+      "archive_bytes": 221771,
+      "archive_sha256": "ccd418aaa1fa81e6f64a77a467cb93c68ebfc1b9541f06e231629ea9b0ab62e8"
+    },
+    {
+      "name": "prose-sanitiser-slop",
+      "dir": "crates/slop",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+      "rust_version": "1.89",
+      "readme": "README.md",
+      "keywords": [
+        "slop",
+        "ai-detection",
+        "linter",
+        "prose",
+        "writing"
+      ],
+      "categories": [
+        "text-processing",
+        "command-line-utilities"
+      ],
+      "publish": true,
+      "package_file_count": 23,
+      "package_list_sha256": "0f2ff50dd47c39b520a137b9aee1992ae1c09b71fbf2e2a489da361b80ba2b73",
+      "licence_texts_in_archive": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT"
+      ],
+      "readme_in_archive": true,
+      "archive": "prose-sanitiser-slop-0.1.1.crate",
+      "archive_bytes": 66623,
+      "archive_sha256": "bd725504943c00d6df791e408c53e4dc79d3dfcace88dcde423d6f9f9b40e443"
+    },
+    {
+      "name": "prose-sanitiser-media",
+      "dir": "crates/media",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+      "rust_version": "1.89",
+      "readme": "README.md",
+      "keywords": [
+        "c2pa",
+        "exif",
+        "xmp",
+        "metadata",
+        "provenance"
+      ],
+      "categories": [
+        "multimedia::images",
+        "filesystem"
+      ],
+      "publish": true,
+      "package_file_count": 37,
+      "package_list_sha256": "023cf38c56eeb2ddf4c7864378ff68ac178aae0f6ddd92e9d11d738ce528881d",
+      "licence_texts_in_archive": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT"
+      ],
+      "readme_in_archive": true,
+      "archive": "prose-sanitiser-media-0.1.1.crate",
+      "archive_bytes": 124231,
+      "archive_sha256": "e06a7c2c0c8ab8c442735d792b0d683282b5a56b0f2d6c9dd26030cb0d62230c"
+    },
+    {
+      "name": "prose-sanitiser",
+      "dir": "crates/cli",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+      "rust_version": "1.89",
+      "readme": "README.md",
+      "keywords": [
+        "sanitiser",
+        "provenance",
+        "unicode",
+        "metadata",
+        "cli"
+      ],
+      "categories": [
+        "command-line-utilities",
+        "text-processing"
+      ],
+      "publish": true,
+      "package_file_count": 41,
+      "package_list_sha256": "aa25ed5d16c13a4b7a4a2aeb9000c10faee3645f20f9192cc02ae458f4b66c6a",
+      "licence_texts_in_archive": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT"
+      ],
+      "readme_in_archive": true,
+      "archive": "prose-sanitiser-0.1.1.crate",
+      "archive_bytes": 103972,
+      "archive_sha256": "b9c5f3deadea8ea08c126dcc66750bc9758018eecb2d21b021bfffdad9810e07"
+    },
+    {
+      "name": "prose-sanitiser-server",
+      "dir": "crates/server",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/DreamLab-AI/prose-sanitiser",
+      "rust_version": "1.89",
+      "readme": "README.md",
+      "keywords": [
+        "sanitiser",
+        "provenance",
+        "http",
+        "axum",
+        "service"
+      ],
+      "categories": [
+        "web-programming::http-server",
+        "text-processing"
+      ],
+      "publish": false,
+      "package_file_count": 11,
+      "package_list_sha256": "015c95d02d04d5f0a405697059ffe738f441cd74f470705669573d3c864327aa",
+      "licence_texts_in_archive": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT"
+      ],
+      "readme_in_archive": true,
+      "archive": null,
+      "archive_note": "publish = false; no archive built"
+    }
+  ],
+  "dependency_graph": {
+    "cargo_lock_sha256": "5696e82cee3bd124a725e0cfe02e861c8b05f4174f12e9c9db96d715a6083d09",
+    "cargo_tree_sha256": "5130bcadf3be672a58f6e288fd4fcc7294be8ee12433998ebda849dc86b3a7b8",
+    "cargo_tree_lines": 860,
+    "unique_resolved_crates": 337,
+    "command": "cargo tree --workspace --all-features --edges normal"
+  },
+  "checks": {
+    "toolchain": {
+      "cargo": "1.98.1 (797e8a9bc 2026-08-05)",
+      "rustc": "1.98.1 (48a229cea 2026-09-01)",
+      "cargo-deny": "0.20.2",
+      "declared_msrv": "1.89",
+      "msrv_note": "MSRV is declared but not proven in this container: no 1.89 toolchain is installed, so no build against the floor ran here. It is proven in CI \u2014 the `msrv` job in .github/workflows/ci.yml reads rust-version from Cargo.toml, installs exactly that toolchain and compiles every test binary against it."
+    },
+    "results": [
+      {
+        "check": "cargo fmt --all --check",
+        "outcome": "pass",
+        "detail": "no formatting drift"
+      },
+      {
+        "check": "cargo test --workspace --all-features",
+        "outcome": "pass",
+        "detail": "767 tests across 30 binaries; 0 failed, 0 ignored"
+      },
+      {
+        "check": "cargo clippy --workspace --all-targets --all-features -- -D warnings",
+        "outcome": "pass",
+        "detail": "clean after fixing one real error: clippy::chunks_exact_to_as_chunks in crates/unicode/src/stego.rs, the zero-width payload bit-packing loop"
+      },
+      {
+        "check": "RUSTDOCFLAGS=\"-D warnings\" cargo doc --no-deps --workspace --all-features",
+        "outcome": "pass",
+        "detail": "clean with #![deny(missing_docs)] now active on all seven crates; two redundant explicit intra-doc link targets fixed in prose-sanitiser-slop"
+      },
+      {
+        "check": "cargo deny check",
+        "outcome": "pass",
+        "detail": "advisories ok, bans ok, licenses ok, sources ok; two documented advisory ignores and duplicate-version warnings only"
+      },
+      {
+        "check": "cargo package --list (all 7) and cargo package (6 publishable)",
+        "outcome": "pass",
+        "detail": "every publishable crate archives and passes its verification build; LICENSE-MIT, LICENSE-APACHE and README.md present in all six archives"
+      },
+      {
+        "check": "cargo package rebuilt from scratch, digests compared",
+        "outcome": "pass",
+        "detail": "all six archives deleted and rebuilt; every sha256 reproduced byte-identically, so the archive digests below are stable for this working tree rather than a one-off observation"
+      }
+    ],
+    "doctests": {
+      "outcome": "pass",
+      "detail": "43 doctests compile and run (11 added in this pass), all passing",
+      "per_crate": {
+        "prose-sanitiser": 6,
+        "prose-sanitiser-core": 9,
+        "prose-sanitiser-media": 3,
+        "prose-sanitiser-server": 0,
+        "prose-sanitiser-slop": 5,
+        "prose-sanitiser-uk": 12,
+        "prose-sanitiser-unicode": 8
+      }
+    },
+    "ci_gate": {
+      "workflow": ".github/workflows/ci.yml",
+      "jobs": [
+        "check (fmt, clippy, test, doc with RUSTDOCFLAGS=-D warnings)",
+        "deny",
+        "msrv"
+      ],
+      "change_this_pass": "clippy, test, doc and the msrv build now run with --all-features. Without it CI never compiled the six cfg blocks behind the optional external-verify feature in prose-sanitiser-media, so that code could rot unnoticed.",
+      "enforcement_note": "With #![deny(missing_docs)] in all seven crate roots and the existing RUSTDOCFLAGS=-D warnings doc job, the documentation standard is now gated by CI rather than being a one-off state."
+    }
+  },
+  "notices": {
+    "workspace_licence_texts": [
+      "LICENSE-MIT",
+      "LICENSE-APACHE"
+    ],
+    "per_crate_licence_texts": "symlinks to the workspace texts in every crate directory; cargo dereferences them, so each archive carries real 1120-byte MIT and 11393-byte Apache-2.0 files",
+    "third_party_notices": [
+      {
+        "component": "VarCon / SCOWL derived dialect data",
+        "crate": "prose-sanitiser-uk",
+        "notice": "crates/uk/data/LICENSE-VarCon",
+        "in_archive": true,
+        "terms": "permissive, retained verbatim"
+      }
+    ],
+    "advisory_exceptions": [
+      {
+        "id": "RUSTSEC-2023-0071",
+        "crate": "rsa",
+        "reached_via": "c2pa -> prose-sanitiser-media",
+        "reason": "Marvin timing side channel in PKCS#1 v1.5 decryption; this workspace only verifies signatures over manifests it is about to delete, holds no RSA private key and performs no decryption",
+        "status": "no fixed upstream release"
+      },
+      {
+        "id": "RUSTSEC-2024-0370",
+        "crate": "proc-macro-error",
+        "reached_via": "c2pa -> static-iref",
+        "reason": "unmaintained compile-time proc-macro dependency; no runtime code",
+        "status": "tracked upstream"
+      }
+    ],
+    "duplicate_versions": "cargo-deny reports duplicate `zip` (2.4.2 and 8.6.0) and `winnow`, both second copies pulled by c2pa. Policy is `multiple-versions = warn`; neither is a licence or advisory issue."
+  }
+}

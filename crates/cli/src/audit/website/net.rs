@@ -17,11 +17,18 @@ pub type UrlOrigin = (String, String, u16);
 /// handles absolute http(s) URLs, and anything it cannot parse confidently is
 /// rejected instead of guessed at.
 pub struct ParsedUrl {
+    /// Lowercased scheme, always `http` or `https`.
     pub scheme: String,
+    /// Lowercased host, with any `userinfo@` prefix removed.
     pub host: String,
+    /// The explicit port, or the scheme's default when none was given.
     pub port: u16,
+    /// The request path, defaulting to `/` when the URL had none.
     pub path: String,
+    /// The query string without its leading `?`, when present.
     pub query: Option<String>,
+    /// Whether the URL carried a `user:password@` component. The audit
+    /// rejects such URLs rather than transmitting the credentials.
     pub has_credentials: bool,
 }
 

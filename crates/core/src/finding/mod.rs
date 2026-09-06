@@ -20,8 +20,12 @@ use crate::language::LanguageFilter;
 /// so a report says where to spend effort rather than treating every hit alike.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Severity {
+    /// A Tier-1 tell: rare in human prose and strongly indicative on its own.
     High,
+    /// A Tier-2 tell: common enough in human prose that it signals only in
+    /// aggregate with other hits.
     Medium,
+    /// A weak signal, reported for completeness and not worth acting on alone.
     Low,
 }
 

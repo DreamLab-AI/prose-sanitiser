@@ -58,14 +58,31 @@ pub fn hue_of(hex: &str) -> (u8, u8, u8) {
     (byte(0..2), byte(2..4), byte(4..6))
 }
 
+/// Whether an RGB triple reads as the saturated blue of the default
+/// "AI startup" palette: a dominant blue channel clearly ahead of red.
 pub fn is_bluish((r, g, b): (u8, u8, u8)) -> bool {
     b > 150 && b as u16 > r as u16 + 30 && b >= g
 }
 
+/// Whether an RGB triple reads as the blue-violet half of the same default
+/// palette: blue leading, red close behind and green suppressed under both.
 pub fn is_purpleish((r, g, b): (u8, u8, u8)) -> bool {
     b > 120 && r > 90 && r < b && (g as i16) < r as i16 - 20 && (g as i16) < b as i16 - 20
 }
 
+/// Whether a CSS hex colour is pure black or pure white, in either the
+/// three- or six-digit form.
+///
+/// Pure `#000`/`#fff` is the tell: a considered palette tints its extremes
+/// towards the surface rather than bottoming out the channels.
+///
+/// ```
+/// use prose_sanitiser_slop::design::rules::is_pure_bw;
+///
+/// assert!(is_pure_bw("#FFF"));
+/// assert!(is_pure_bw("000000"));
+/// assert!(!is_pure_bw("#0a0a0a"));
+/// ```
 pub fn is_pure_bw(hex: &str) -> bool {
     let text = hex.trim_start_matches('#').to_lowercase();
     let expanded: String = if text.len() == 3 {
@@ -86,6 +103,8 @@ pub fn is_grayish((r, g, b): (u8, u8, u8)) -> bool {
 /// A per-line check, seeing the raw line.
 pub type LineCheck = fn(&str) -> Option<(Severity, String)>;
 
+/// Flags gradient-filled text: `background-clip: text`, or a transparent
+/// `text-fill-color`. Both trade legibility and contrast control for novelty.
 pub fn rule_gradient_text(line: &str) -> Option<(Severity, String)> {
     let low = line.to_lowercase();
     if (low.contains("background-clip") || low.contains("-webkit-background-clip"))
@@ -105,6 +124,9 @@ pub fn rule_gradient_text(line: &str) -> Option<(Severity, String)> {
     None
 }
 
+/// Flags bounce and elastic motion: a `cubic-bezier` with a negative control
+/// point (overshoot), or a named bounce/elastic/back easing on a transition
+/// or animation.
 pub fn rule_bounce_easing(line: &str) -> Option<(Severity, String)> {
     static OVERSHOOT: OnceLock<Regex> = OnceLock::new();
     static NAMED: OnceLock<Regex> = OnceLock::new();
@@ -135,6 +157,9 @@ pub fn rule_bounce_easing(line: &str) -> Option<(Severity, String)> {
     None
 }
 
+/// Flags transitions on layout properties (`width`, `height`, `top`, `left`,
+/// `right`, `bottom`, `margin`), which force reflow every frame. `transform`
+/// and `opacity` animate on the compositor instead.
 pub fn rule_layout_transition(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     let low = line.to_lowercase();
@@ -152,6 +177,7 @@ pub fn rule_layout_transition(line: &str) -> Option<(Severity, String)> {
     None
 }
 
+/// Flags a `font-size` in pixels below the 11px legibility floor.
 pub fn rule_tiny_text(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     let low = line.to_lowercase();
@@ -170,6 +196,8 @@ pub fn rule_tiny_text(line: &str) -> Option<(Severity, String)> {
     })
 }
 
+/// Flags a unitless `line-height` below 1.3, which is too tight for body
+/// copy; 1.5 to 1.75 is the readable band.
 pub fn rule_tight_leading(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     let low = line.to_lowercase();
@@ -188,6 +216,8 @@ pub fn rule_tight_leading(line: &str) -> Option<(Severity, String)> {
     })
 }
 
+/// Flags a `letter-spacing` above 0.15em, which suits short display settings
+/// but never body copy.
 pub fn rule_wide_tracking(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     let low = line.to_lowercase();
@@ -206,6 +236,8 @@ pub fn rule_wide_tracking(line: &str) -> Option<(Severity, String)> {
     })
 }
 
+/// Flags `text-align: justify`, which opens whitespace rivers on screen
+/// because browsers do not hyphenate the way a typesetter would.
 pub fn rule_justified_text(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| re(r"text-align\s*:\s*justify"))
@@ -218,6 +250,8 @@ pub fn rule_justified_text(line: &str) -> Option<(Severity, String)> {
         })
 }
 
+/// Flags `text-transform: uppercase`. Correct for short labels and wrong for
+/// passages, so this reports for a human read rather than asserting a defect.
 pub fn rule_allcaps_body(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| re(r"text-transform\s*:\s*uppercase"))
@@ -231,6 +265,8 @@ pub fn rule_allcaps_body(line: &str) -> Option<(Severity, String)> {
         })
 }
 
+/// Flags a fully-rounded pill radius (`9999px` and its equivalents), which is
+/// a default rather than a decision unless the brand thesis asks for it.
 pub fn rule_pill_button(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| re(r"border-radius\s*:\s*(9999px|999px|50rem|100vmax)"))
@@ -243,6 +279,8 @@ pub fn rule_pill_button(line: &str) -> Option<(Severity, String)> {
         })
 }
 
+/// Flags a `text-shadow` with a blur of 8px or more — the neon glow that
+/// dates a page unless the thesis is deliberately synthwave or Y2K.
 pub fn rule_dark_glow(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     let low = line.to_lowercase();
@@ -258,6 +296,8 @@ pub fn rule_dark_glow(line: &str) -> Option<(Severity, String)> {
     })
 }
 
+/// Flags the stock `box-shadow: 0 1px 3px rgba(0,0,0,…)`, the untinted
+/// default that appears wherever no one chose a shadow.
 pub fn rule_generic_drop_shadow(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| re(r"box-shadow\s*:\s*0\s+1px\s+3px\s+rgba\(0\s*,\s*0\s*,\s*0"))
@@ -270,6 +310,8 @@ pub fn rule_generic_drop_shadow(line: &str) -> Option<(Severity, String)> {
         })
 }
 
+/// Flags a one-sided border of 3px or more — the side-tab stripe that reads
+/// as a template tell when paired with rounded cards.
 pub fn rule_side_tab(line: &str) -> Option<(Severity, String)> {
     static RE: OnceLock<Regex> = OnceLock::new();
     let low = line.to_lowercase();

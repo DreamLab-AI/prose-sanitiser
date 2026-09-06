@@ -28,22 +28,38 @@ pub use webp::{WEBP_RIFF, WEBP_SIG};
 /// The image inspect result.
 #[derive(Debug, Clone)]
 pub struct ImageInspectReport {
+    /// The inspected file's path, as given to the inspect call.
     pub path: String,
     /// png | jpeg | webp | unknown
     pub format: String,
+    /// Whether a C2PA/JUMBF manifest is embedded in the container.
     pub has_c2pa: bool,
+    /// Whether anything AI-attributable was found — a C2PA manifest, a
+    /// generator string in EXIF/XMP, or a known generator's parameter block.
     pub has_ai_metadata: bool,
+    /// One human-readable line per hit, graded independently by
+    /// `classify_finding_confidence` when serialised.
     pub findings: Vec<String>,
+    /// What the optional external cross-check tools reported, if any ran.
+    /// Advisory only: never part of the removal path.
     pub tools: Value,
     /// What the official `c2pa` SDK read out of the manifest store, including
     /// whether the asset declares a soft binding. Read-only: see
     /// [`c2pa_read`] for why removal is never done through the SDK.
     pub c2pa: Value,
+    /// The SynthID scorer's verdict, when an upstream scorer was configured
+    /// and ran. `None` when no scorer was available.
     pub synthid: Option<Value>,
+    /// Caveats about the inspection itself: a truncated read, a chunk that
+    /// could not be parsed, an unsupported variant.
     pub notes: Vec<String>,
 }
 
 impl ImageInspectReport {
+    /// The JSON object emitted by `inspect-image`.
+    ///
+    /// Adds a `findings_confidence` array parallel to [`Self::findings`], and
+    /// flattens `synthid` to `null` when no scorer ran.
     pub fn to_json(&self) -> Value {
         json!({
             "path": self.path,
@@ -154,11 +170,24 @@ pub fn inspect_image(
 /// Which pixel-domain remover to run after metadata cleaning.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PixelRemover {
+    /// CtrlRegen: controllable regeneration of the image through the upstream
+    /// CtrlRegen checkpoint.
     CtrlRegen,
+    /// MarkDiffusion's DiffusionPurification: noise-then-denoise purification
+    /// through a diffusion model.
     Diffusion,
 }
 
 impl PixelRemover {
+    /// Parses the CLI spelling of a remover (`ctrlregen`, `diffusion`),
+    /// returning `None` for anything else.
+    ///
+    /// ```
+    /// use prose_sanitiser_media::image::PixelRemover;
+    ///
+    /// assert_eq!(PixelRemover::parse("ctrlregen"), Some(PixelRemover::CtrlRegen));
+    /// assert_eq!(PixelRemover::parse("none"), None);
+    /// ```
     pub fn parse(value: &str) -> Option<Self> {
         match value {
             "ctrlregen" => Some(Self::CtrlRegen),
@@ -178,10 +207,22 @@ impl PixelRemover {
 /// Everything the clean step needs, so the CLI can pass its flags straight in.
 #[derive(Debug, Clone)]
 pub struct CleanImageOptions {
+    /// Remove every metadata chunk or segment, not only the AI-attributable
+    /// ones. Defaults to `true`; clearing it keeps benign metadata such as
+    /// colour profiles and orientation.
     pub strip_all_metadata: bool,
+    /// Directory holding the upstream SynthID scorer, enabling the score pass.
+    /// `None` skips it.
     pub synthid_dir: Option<String>,
+    /// Which pixel-domain remover to run after metadata cleaning. `None` — the
+    /// default — leaves pixels byte-identical, which is the only mode in which
+    /// cleaning is lossless.
     pub remove_pixel: Option<PixelRemover>,
+    /// Settings for the CtrlRegen remover, used when
+    /// [`PixelRemover::CtrlRegen`] is selected.
     pub ctrlregen: harness::CtrlRegenOptions,
+    /// Settings for the DiffusionPurification remover, used when
+    /// [`PixelRemover::Diffusion`] is selected.
     pub markdiffusion: harness::MarkDiffusionOptions,
 }
 

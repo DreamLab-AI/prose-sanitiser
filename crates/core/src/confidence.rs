@@ -14,6 +14,12 @@
 //! The mapping is intentionally conservative; a scanner finding is a signal,
 //! not a verdict.
 
+/// Every confidence label a report may carry, strongest first.
+///
+/// The order is the ranking: `confirmed` is a parsed, structural fact and
+/// `likely_false_positive` is a raw byte-scan hit that can collide with
+/// compressed data. Consumers filtering a report should compare against this
+/// list rather than hard-coding the strings.
 pub const CONFIDENCE_LEVELS: [&str; 4] = [
     "confirmed",
     "probable",

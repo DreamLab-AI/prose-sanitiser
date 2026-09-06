@@ -13,12 +13,23 @@ use crate::image::detect_format as detect_image_format;
 /// Which pipeline owns a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
+    /// Plain text and source: the Unicode surgery and prose pipelines.
     Text,
+    /// PNG, JPEG or WebP: chunk- and segment-level metadata surgery.
     Image,
+    /// A structured document — SVG, PDF, OOXML, ODF, HTML, Markdown — cleaned
+    /// at part granularity.
     Container,
 }
 
 impl Kind {
+    /// The lowercase wire form used in JSON reports and CLI output.
+    ///
+    /// ```
+    /// use prose_sanitiser::dispatch::Kind;
+    ///
+    /// assert_eq!(Kind::Container.as_str(), "container");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Kind::Text => "text",
@@ -27,6 +38,15 @@ impl Kind {
         }
     }
 
+    /// The inverse of [`Kind::as_str`], for a caller forcing a pipeline from
+    /// the command line. Returns `None` for anything else.
+    ///
+    /// ```
+    /// use prose_sanitiser::dispatch::Kind;
+    ///
+    /// assert_eq!(Kind::parse("image"), Some(Kind::Image));
+    /// assert_eq!(Kind::parse("video"), None);
+    /// ```
     pub fn parse(value: &str) -> Option<Self> {
         match value {
             "text" => Some(Kind::Text),
@@ -37,10 +57,17 @@ impl Kind {
     }
 }
 
+/// Extensions routed to the image pipeline.
 pub const IMAGE_EXTS: &[&str] = &["png", "jpg", "jpeg", "webp"];
+/// Extensions routed to the container pipeline.
 pub const CONTAINER_EXTS: &[&str] = &[
     "svg", "pdf", "docx", "odt", "html", "htm", "md", "markdown", "mdx",
 ];
+/// Extensions routed to the text pipeline.
+///
+/// Not exhaustive: an unknown extension whose bytes sniff as text is treated
+/// as text anyway. This list only settles the cases where the extension is
+/// authoritative.
 pub const TEXT_EXTS: &[&str] = &[
     "txt", "text", "css", "js", "py", "rs", "go", "json", "yaml", "yml", "toml", "csv",
 ];

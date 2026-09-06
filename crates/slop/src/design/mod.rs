@@ -34,12 +34,23 @@ const WALK_SKIP_DIRS: &[&str] = &[
 /// How serious a finding is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Severity {
+    /// A judgement call: defensible when the brand thesis calls for it, worth
+    /// a second look otherwise.
     Info,
+    /// A dated or costly choice that should normally be changed.
     Warn,
+    /// A defect that harms legibility or accessibility outright.
     Error,
 }
 
 impl Severity {
+    /// The lowercase wire form used in JSON reports and CLI output.
+    ///
+    /// ```
+    /// use prose_sanitiser_slop::design::Severity;
+    ///
+    /// assert_eq!(Severity::Warn.as_str(), "warn");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Severity::Info => "info",
@@ -48,6 +59,15 @@ impl Severity {
         }
     }
 
+    /// The inverse of [`Severity::as_str`], for parsing a severity floor from
+    /// a command line. Returns `None` for anything else.
+    ///
+    /// ```
+    /// use prose_sanitiser_slop::design::Severity;
+    ///
+    /// assert_eq!(Severity::parse("error"), Some(Severity::Error));
+    /// assert_eq!(Severity::parse("critical"), None);
+    /// ```
     pub fn parse(value: &str) -> Option<Self> {
         match value {
             "info" => Some(Severity::Info),
@@ -70,12 +90,18 @@ impl Severity {
 /// One reported anti-pattern.
 #[derive(Debug, Clone)]
 pub struct Finding {
+    /// The stable identifier of the rule that fired, as listed in
+    /// [`rules::LINE_RULES`].
     pub rule: String,
+    /// How serious this hit is.
     pub severity: Severity,
     /// 1-based; zero for a whole-file finding.
     pub line: usize,
+    /// The scanned file's path, as given to the scan.
     pub file: String,
+    /// The offending line, trimmed and truncated to 120 characters.
     pub snippet: String,
+    /// The human-readable explanation, including the remedy where there is one.
     pub message: String,
 }
 
@@ -98,6 +124,10 @@ impl Finding {
         }
     }
 
+    /// The compact JSON object used by the `slop-detect` report.
+    ///
+    /// The shape is fixed by every consumer that already diffs it; add fields
+    /// to the SARIF report rather than here.
     pub fn to_json(&self) -> Value {
         json!({
             "rule": self.rule,

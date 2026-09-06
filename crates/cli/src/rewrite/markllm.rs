@@ -14,6 +14,7 @@ use crate::common::proc::{run_capture, Rlimits};
 use crate::common::{env_nonempty, env_usize, which};
 use crate::image::harness::scripts_dir;
 
+/// The model the MarkLLM adapter uses when the caller names none.
 pub const DEFAULT_MARKLLM_MODEL: &str = "facebook/opt-1.3b";
 
 /// How to run the MarkLLM adapter.
@@ -21,8 +22,13 @@ pub const DEFAULT_MARKLLM_MODEL: &str = "facebook/opt-1.3b";
 pub struct MarkllmOptions {
     /// kgw | synthid | synthid-text
     pub scheme: String,
+    /// Directory holding the upstream MarkLLM checkout. `None` disables the
+    /// adapter: this crate never downloads a model.
     pub upstream_dir: Option<String>,
+    /// Model identifier to run the scheme against, defaulting to
+    /// [`DEFAULT_MARKLLM_MODEL`].
     pub model: String,
+    /// Wall-clock cap on the adapter child process, in seconds.
     pub timeout: f64,
 }
 

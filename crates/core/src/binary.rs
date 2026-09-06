@@ -41,6 +41,10 @@ pub const BINARY_MAGIC: &[(&[u8], &str)] = &[
     (b"OTTO", "an OpenType font"),
 ];
 
+/// How many leading bytes the binary-versus-text sniff reads.
+///
+/// Bounded so that classifying a file never reads an unbounded prefix into
+/// memory, and fixed so the verdict is reproducible for a given input.
 pub const BINARY_SNIFF_BYTES: usize = 8192;
 
 /// Real text runs ~0% control bytes; compressed and executable data runs far

@@ -22,6 +22,12 @@ const JUDGEMENT: ConfidenceTier = ConfidenceTier::LowConfidenceJudgement;
 /// A structural tell strong enough to gate an opt-in fix, never an automatic one.
 const STYLISTIC: ConfidenceTier = ConfidenceTier::HighConfidenceStylistic;
 
+/// Every mechanical prose rule, in report order.
+///
+/// Each entry carries its own severity, confidence tier, sources and dates, so
+/// a report can say how far to trust a hit rather than presenting all of them
+/// alike. Narrative and voice tells are deliberately absent: they need a human
+/// read and are documented in the skill rather than encoded here.
 pub const RULES: &[Rule] = &[
     Rule {
         id: "preamble-label",

@@ -25,17 +25,35 @@ use prose_sanitiser_unicode::{clean_text, CleanOptions};
 /// The container inspect result.
 #[derive(Debug, Clone)]
 pub struct ContainerInspectReport {
+    /// The inspected file's path, as given to the inspect call.
     pub path: String,
+    /// The detected container: `svg`, `pdf`, `docx`, `odt`, `html`, `markdown`
+    /// or `unknown`. Extension first, then bytes.
     pub format: String,
+    /// Whether a C2PA/JUMBF manifest is embedded anywhere in the container.
     pub has_c2pa: bool,
+    /// Whether anything AI-attributable was found — a C2PA manifest, a
+    /// generator string, or AI-specific metadata in a part.
     pub has_ai_metadata: bool,
+    /// One human-readable line per hit. Each is graded independently by
+    /// `classify_finding_confidence` when serialised.
     pub findings: Vec<String>,
+    /// What the optional external cross-check tools reported, if any ran.
+    /// Advisory only: never part of the removal path.
     pub tools: Value,
+    /// Per-format structured detail — the parts, streams or nodes a finding
+    /// came from — for a caller that wants more than the finding line.
     pub details: Value,
+    /// Caveats about the inspection itself: an unsupported sub-format, a
+    /// truncated read, a part that could not be parsed.
     pub notes: Vec<String>,
 }
 
 impl ContainerInspectReport {
+    /// The JSON object emitted by `inspect-file`.
+    ///
+    /// Adds a `findings_confidence` array parallel to [`Self::findings`], so a
+    /// consumer can filter raw byte-scan hits from parsed structural facts.
     pub fn to_json(&self) -> Value {
         json!({
             "path": self.path,

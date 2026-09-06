@@ -424,18 +424,26 @@ model output.
 
 **MIT OR Apache-2.0**, at your option.
 
-Per [ADR-2030](../../../../docs/adr/ADR-2030-permissive-licensing-for-publishable-service-crates.md), crates under `services/` are
-permissive per crate while the containing repository stays AGPL-3.0-only.
-That is not a contradiction: the AGPL governs the aggregate hosted service,
-not the licence of each part, and this grant travels with the crate.
+Copyright (c) 2026 DreamLab AI Consulting Ltd and contributors. The full texts
+are in [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE)
+beside this file, and both ship inside the published archive.
+
+This crate was extracted from the agentbox `services/prose-sanitiser` tree,
+where [agentbox ADR-2030](https://github.com/DreamLab-AI/agentbox/blob/main/docs/adr/ADR-2030-permissive-licensing-for-publishable-service-crates.md) settled the position: a service crate is
+permissive per crate while the containing repository stays AGPL-3.0-only. That
+is not a contradiction — the AGPL governs the aggregate hosted service, not the
+licence of each part, and the grant travels with the crate. Since extraction
+this repository is `MIT OR Apache-2.0` throughout, so the grant no longer sits
+inside a copyleft aggregate at all.
 ## Publishing checklist
 
 Publication candidate. Before `cargo publish`:
 
-- [x] **Licence position settled.** `MIT OR Apache-2.0` per ADR-2030
-      (2026-09-03, accepted): `services/` crates are permissive per crate, the
-      containing repository stays AGPL-3.0-only, and the grant travels with the
-      crate. `LICENSE-MIT` and `LICENSE-APACHE` present and linked
+- [x] **Licence position settled.** `MIT OR Apache-2.0` per
+      [agentbox ADR-2030](https://github.com/DreamLab-AI/agentbox/blob/main/docs/adr/ADR-2030-permissive-licensing-for-publishable-service-crates.md) (2026-09-03, accepted), and unconditionally so
+      since extraction: this repository is permissive throughout, with no
+      copyleft aggregate above it. `LICENSE-MIT` and `LICENSE-APACHE` present
+      beside every crate and shipped in the archive
 - [x] `description`, `repository`, `keywords`, `categories`, `readme` set
 - [x] Pure Rust: no C dependencies, no subprocesses, no network
 - [x] Every rule carries `since`, `reviewed` and its sources, and the tables

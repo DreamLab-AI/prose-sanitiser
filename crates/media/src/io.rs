@@ -21,6 +21,10 @@ pub fn max_input_bytes() -> u64 {
     env_usize("WATERMARKS_MAX_INPUT_BYTES", 256 << 20) as u64
 }
 
+/// Budget for a read from standard input, default 64 MiB.
+///
+/// Lower than [`max_input_bytes`] because a piped stream has no size known in
+/// advance to check first. Override with `WATERMARKS_MAX_STDIN_BYTES`.
 pub fn max_stdin_bytes() -> u64 {
     env_usize("WATERMARKS_MAX_STDIN_BYTES", 64 << 20) as u64
 }
@@ -245,6 +249,16 @@ pub fn safe_write_bytes(path: &Path, data: &[u8]) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Encodes `units` back to bytes and writes them over `path` atomically.
+///
+/// The text counterpart of [`safe_write_bytes`], carrying undecodable bytes
+/// through unchanged so a decode/clean/encode round trip is lossless. The
+/// write is a temporary file plus rename, so `path` is never left partial and
+/// a symlink at `path` is not followed.
+///
+/// # Errors
+///
+/// Returns any I/O error from creating, writing or renaming the temporary.
 pub fn safe_write_text(path: &Path, units: &[Unit]) -> std::io::Result<()> {
     safe_write_bytes(path, &surrogate::encode(units))
 }
