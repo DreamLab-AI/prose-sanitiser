@@ -332,3 +332,37 @@ fn every_reported_snippet_contains_its_match() {
         );
     }
 }
+
+#[test]
+fn markdown_structure_is_not_counted_as_em_dashes() {
+    // Front-matter fences, a table's delimiter row and a thematic break are
+    // Markdown syntax, not LaTeX em-dashes; none of them is prose.
+    let body = "---\nid: x\ntitle: A page\n---\n\n| a | b |\n|---|:---:|\n| 1 | 2 |\n\n---\n\nPlain sentence here.\n";
+    let result = scan_text(body, Severity::Low);
+    assert!(
+        !result.findings.iter().any(|f| f.label.contains("Em-dash")),
+        "{:?}",
+        result.findings
+    );
+}
+
+#[test]
+fn em_dashes_inside_inline_code_are_not_counted() {
+    // A product label quoted as code keeps its own punctuation.
+    let result = scan_text(
+        "Press `Save — and publish`, `Undo — revert`, `A — b` and `C — d`.\n",
+        Severity::Low,
+    );
+    assert!(!result.findings.iter().any(|f| f.label.contains("Em-dash")));
+}
+
+#[test]
+fn front_matter_is_only_recognised_on_the_first_line() {
+    // A `---` later in the file is a thematic break, and the prose after it is scanned.
+    let body = "Intro.\n\n---\n\nA --- b --- c --- d --- e.\n";
+    let result = scan_text(body, Severity::Low);
+    assert!(result
+        .findings
+        .iter()
+        .any(|f| f.label == "Em-dash density over threshold"));
+}

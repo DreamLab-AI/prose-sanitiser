@@ -271,6 +271,10 @@ pub fn scan_file(path: &Path, rules: &[CompiledRule], floor: Severity) -> Vec<Fi
 
     let mut findings = Vec::new();
     let mut in_fence = false;
+    let mut in_front_matter = false;
+    let rule_line = Regex::new(r"^(\|?\s*:?-{3,}:?\s*)(\|\s*:?-{3,}:?\s*)*\|?$|^([-*_]\s*){3,}$")
+        .expect("static regex compiles");
+    let inline_code = Regex::new(r"`[^`\n]*`").expect("static regex compiles");
     let mut line_offset = 0usize;
     let mut word_count = 0usize;
     let mut emdash_total = 0usize;
@@ -288,6 +292,17 @@ pub fn scan_file(path: &Path, rules: &[CompiledRule], floor: Severity) -> Vec<Fi
         let line = raw_line.trim_end_matches('\r');
         let stripped = line.trim();
 
+        // YAML front matter opens only on the first line and is metadata, not prose.
+        if index == 0 && stripped == "---" {
+            in_front_matter = true;
+            continue;
+        }
+        if in_front_matter {
+            if stripped == "---" || stripped == "..." {
+                in_front_matter = false;
+            }
+            continue;
+        }
         // Toggle fenced code blocks; never scan code.
         if stripped.starts_with("```") || stripped.starts_with("~~~") {
             in_fence = !in_fence;
@@ -301,11 +316,18 @@ pub fn scan_file(path: &Path, rules: &[CompiledRule], floor: Severity) -> Vec<Fi
             continue;
         }
 
+        // A table's delimiter row or a thematic break is Markdown syntax, not prose.
+        if rule_line.is_match(stripped) {
+            continue;
+        }
+
         word_count += stripped.split_whitespace().count();
 
         // Whole-file accumulation. The Unicode em-dash plus the LaTeX-source
-        // "---" (both render as an em-dash).
-        let em = line.matches(EMDASH).count() + line.matches("---").count();
+        // "---" (both render as an em-dash). Inline code keeps its own
+        // punctuation (a quoted product label), as the structural metrics do.
+        let prose = inline_code.replace_all(line, "");
+        let em = prose.matches(EMDASH).count() + prose.matches("---").count();
         if em > 0 {
             emdash_total += em;
             if is_list_line(line) {
