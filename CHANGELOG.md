@@ -7,6 +7,26 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-01
+
+### Fixed
+
+- **slop-scan counted Markdown syntax as em-dashes.** Every `---` was read as a
+  LaTeX em-dash, so YAML front-matter fences, table delimiter rows and
+  thematic breaks tripped the em-dash density rule on clean Markdown. Front
+  matter (first line only) and rule lines are now skipped, and em-dashes inside
+  inline code, such as a quoted product label, are not counted. This matches
+  the structural metrics. Found by three walkthrough writers; on their chapters
+  the false findings dropped to zero.
+
+### Changed
+
+- **Every public item is documented**, with compiling examples on the dispatch
+  and rewrite types, and each crate's README is refreshed.
+- **CI pins external workflow actions** to reviewed commits.
+
+## Hardening pass (2026-09-03, shipped in 0.1.0)
+
 The hardening pass ahead of a crates.io publication. Driven by the design brief
 of 2026-09-03, which reset four assumptions the original Python tool was written
 under: Claude's own text has been watermarked since 2 August 2026, no major LLM
