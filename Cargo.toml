@@ -26,19 +26,19 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 rust-version = "1.89"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/DreamLab-AI/prose-sanitiser"
 
 [workspace.dependencies]
-prose-sanitiser-core = { path = "crates/core", version = "0.1.2" }
-prose-sanitiser-unicode = { path = "crates/unicode", version = "0.1.2" }
-prose-sanitiser-uk = { path = "crates/uk", version = "0.1.2" }
-prose-sanitiser-slop = { path = "crates/slop", version = "0.1.2" }
-prose-sanitiser-media = { path = "crates/media", version = "0.1.2" }
-prose-sanitiser = { path = "crates/cli", version = "0.1.2" }
+prose-sanitiser-core = { path = "crates/core", version = "0.1.3" }
+prose-sanitiser-unicode = { path = "crates/unicode", version = "0.1.3" }
+prose-sanitiser-uk = { path = "crates/uk", version = "0.1.3" }
+prose-sanitiser-slop = { path = "crates/slop", version = "0.1.3" }
+prose-sanitiser-media = { path = "crates/media", version = "0.1.3" }
+prose-sanitiser = { path = "crates/cli", version = "0.1.3" }
 
 axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
 base64 = "0.22"

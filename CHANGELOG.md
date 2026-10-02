@@ -7,6 +7,16 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-02
+
+### Security
+
+- **rustls 0.23.45 for RUSTSEC-2026-0285.** The `prose-sanitiser` CLI reaches
+  rustls through `ureq`. The lockfile now resolves 0.23.45, so
+  `cargo install --locked prose-sanitiser` and pinned downstream builds carry
+  the fix. No source or API changes; the library crates are republished at
+  0.1.3 to keep the workspace in lock-step.
+
 ## [0.1.2] - 2026-10-01
 
 ### Fixed
