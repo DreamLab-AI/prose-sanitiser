@@ -7,6 +7,25 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-18
+
+### Security
+
+- **rustls 0.23.46 for RUSTSEC-2026-0346, -0347 and -0349.** 0.1.3's rustls
+  0.23.45 closed RUSTSEC-2026-0285 but not these three, published on
+  2026-10-14 and patched in 0.23.46.
+- **zip 9 for RUSTSEC-2026-0367, -0368 and -0369.** The crate's own zip use
+  moves from 2 to 9. All three advisories concern extracting an archive to
+  disk; prose-sanitiser reads archives in memory and never extracts. The zip 8
+  copy that `c2pa` still pulls in is recorded in `deny.toml` for the same
+  reason.
+
+### Changed
+
+- **An OOXML entry whose name cannot be decoded is refused.** zip 9 makes
+  entry names fallible; such an entry is now an error, like an unreadable one,
+  instead of being read under a lossy name.
+
 ## [0.1.3] - 2026-10-02
 
 ### Security
