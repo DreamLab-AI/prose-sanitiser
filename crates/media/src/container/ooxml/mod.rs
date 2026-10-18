@@ -170,7 +170,10 @@ pub fn read_entries_with(data: &[u8], budget: ZipBudget) -> Result<Vec<Entry>, S
         let mut file = archive
             .by_index(index)
             .map_err(|error| format!("cannot read zip entry {index}: {error}"))?;
-        let name = file.name().to_string();
+        let name = file
+            .name()
+            .map_err(|error| format!("zip entry {index} has an undecodable name: {error}"))?
+            .into_owned();
         check_entry_name(&name, &mut seen)?;
         // The declared size is a hint that lets an obvious bomb exit early. It
         // is not the bound: the read below is.
@@ -267,7 +270,7 @@ pub fn zip_namelist(data: &[u8]) -> Result<Vec<String>, String> {
             archive
                 .by_index(index)
                 .ok()
-                .map(|file| file.name().to_string())
+                .and_then(|file| file.name().ok().map(|name| name.into_owned()))
         })
         .collect())
 }
