@@ -1,0 +1,32 @@
+{
+  "repo": "DreamLab-AI/prose-sanitiser",
+  "cron": "0 2 * * *",
+  "slots": [
+    { "deep": "unicode-surgery", "scan": ["invisible-carriers", "homoglyphs", "context-kept-scripts", "smuggled-payload-decode"] },
+    { "deep": "slop-rules", "scan": ["lexical-tells", "structural-tells", "narrative-tells", "false-positive-rate"] },
+    { "deep": "uk-english", "scan": ["sense-aware-spelling", "gazetteer-and-exclusions", "legacy-overrides"] },
+    { "deep": "media-provenance", "scan": ["c2pa-exif-xmp-strip", "container-surgery", "inflate-budgets", "external-tool-invocation"] },
+    { "deep": "cli-and-server", "scan": ["audit-sweeps", "rewrite-layer", "exit-codes", "http-surface"] }
+  ],
+  "bonusModuli": { "7": "security-adversarial", "30": "api-surface-review" },
+  "controlPlaneProbes": ["cargo check --workspace --all-features 2>&1 | tail -5 || true"],
+  "buildStep": { "cmd": "cargo build --workspace --all-features --locked 2>&1 | tail -20", "degradeOnWasmFailure": false },
+  "evaluatorEntrypoints": {
+    "tests": "cargo test --workspace --all-features --locked 2>&1 | tail -40",
+    "fmt": "cargo fmt --all --check && echo fmt: all files formatted",
+    "clippy": { "cmd": "cargo clippy --workspace --all-targets --all-features --locked -- -D warnings 2>&1 | tail -20", "required": true },
+    "doc": { "cmd": "RUSTDOCFLAGS=-Dwarnings cargo doc --workspace --no-deps --all-features --locked 2>&1 | tail -10", "required": false }
+  },
+  "protected": ["crates/unicode/tests/fixtures/**", "crates/cli/tests/fixtures/**", "docs/release-receipts/**"],
+  "adrConvention": "3-digit",
+  "extraDisciplines": [
+    "evaluation-is-not-promotion",
+    "witness-every-quantitative-claim",
+    "upstream-handoff: ideas and test vectors ported from guillaumemeyer/watermarks-remover are recorded in docs/UPSTREAM-DELTA.md; never copy upstream code, and a change that would diverge from a ported vector is a HANDOFF, not a fixture edit",
+    "downstream-handoff: the prose-sanitiser skill consumes the CLI flags, JSON report shape and exit codes; a change to any of them names the skill as affected and is a HANDOFF"
+  ],
+  "ledgerPath": "docs/dream-cycle/LEDGER.md",
+  "branchPrefix": "dream/",
+  "labels": ["dream-cycle", "research"],
+  "autoMerge": false
+}
