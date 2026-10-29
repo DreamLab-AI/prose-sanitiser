@@ -7,6 +7,8 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-29
+
 ### Security
 
 - **c2pa 0.91 for RUSTSEC-2026-0387.** c2pa 0.90 verified with the RustCrypto
