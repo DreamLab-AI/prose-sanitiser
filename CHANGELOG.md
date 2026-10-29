@@ -7,6 +7,26 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+### Security
+
+- **c2pa 0.91 for RUSTSEC-2026-0387.** c2pa 0.90 verified with the RustCrypto
+  0.13 curves, which pull in `crypto-bigint` 0.5; that line has secret-dependent
+  branches and no patched release. c2pa 0.91 verifies through
+  `c2pa_raw_crypto` on p256/p384/p521 0.14 and `crypto-bigint` 0.7.10, which is
+  patched. It also drops the zip 8 copy, so the three zip ignores in
+  `deny.toml` are gone.
+- **tokio 1.54.1 for RUSTSEC-2026-0386** (`AsyncFd` constructors violate I/O
+  safety).
+- **pulldown-cmark 0.13.5 for RUSTSEC-2026-0414** (exponential event growth
+  with `ENABLE_WIKILINKS`).
+- **rustls-webpki 0.103.16 and webpki-roots 1.0.11 for RUSTSEC-2026-0382 and
+  -0381** (distrusted intermediates and the emSign roots).
+
+### Changed
+
+- **MSRV is now Rust 1.96**, the version c2pa 0.91 and `c2pa_raw_crypto`
+  declare.
+
 ## [0.1.4] - 2026-10-18
 
 ### Security
