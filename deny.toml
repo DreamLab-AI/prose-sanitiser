@@ -20,13 +20,6 @@ ignore = [
     # proc-macro-error is unmaintained: a compile-time proc-macro dependency of
     # static-iref (via c2pa); no runtime code.
     { id = "RUSTSEC-2024-0370", reason = "proc-macro-error via c2pa -> static-iref; compile-time only" },
-    # zip 8 via c2pa: all three advisories concern extracting an archive to
-    # disk (setuid bits, symlink targets, permissions through symlinks).
-    # Neither c2pa nor this crate calls ZipArchive::extract or ZipStreamReader;
-    # our own zip use moved to zip 9, which is patched.
-    { id = "RUSTSEC-2026-0367", reason = "zip 8 via c2pa; extract() is never called, archives are read in memory" },
-    { id = "RUSTSEC-2026-0368", reason = "zip 8 via c2pa; extract() is never called, archives are read in memory" },
-    { id = "RUSTSEC-2026-0369", reason = "zip 8 via c2pa; extract() is never called, archives are read in memory" },
 ]
 
 [licenses]

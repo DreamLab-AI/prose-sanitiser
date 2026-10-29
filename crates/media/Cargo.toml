@@ -49,7 +49,7 @@ lopdf = { version = "0.44", default-features = false }
 # verifying a signature over a manifest that is about to be deleted — no private
 # key, no decryption, and no attacker-observable timing channel. Revisit when
 # `rsa` ships a fix, or if this crate ever signs.
-c2pa = { version = "0.90", default-features = false, features = ["rust_native_crypto"], optional = true }
+c2pa = { version = "0.91", default-features = false, features = ["rust_native_crypto"], optional = true }
 
 [dev-dependencies]
 # Decodes both sides of a strip so the pixel-identity assertion is exact
