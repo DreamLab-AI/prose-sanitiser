@@ -300,7 +300,19 @@ fn invisible_findings(units: &[Unit], offsets: &[usize], policy: &TextPolicy) ->
             previous_kept = decision.output;
         }
         // Bidi and smuggled payloads have their own, better-informed rules.
-        if kind == "bidi" || kind == "tag_chars" || kind == "variation_selector" {
+        // Those rules own exactly the tag block and the two selector halves
+        // stego scans (U+FE00..=U+FE0F, U+E0100..=U+E01EF). The Mongolian
+        // FVS block shares the "variation_selector" kind but no stego rule,
+        // so it must fall through to a carrier finding instead of vanishing
+        // between the two surfaces.
+        let selector_in_stego_alphabet = unit
+            .as_char()
+            .map(|c| stego::is_variation_selector(c as u32))
+            .unwrap_or(false);
+        if kind == "bidi"
+            || kind == "tag_chars"
+            || (kind == "variation_selector" && selector_in_stego_alphabet)
+        {
             continue;
         }
         let character = unit.as_char().unwrap_or(char::REPLACEMENT_CHARACTER);
@@ -345,3 +357,26 @@ fn invisible_findings(units: &[Unit], offsets: &[usize], policy: &TextPolicy) ->
 
 #[cfg(test)]
 mod tests;
+
+/// Regression (dream cycle 2026-10-25): a stray Mongolian FVS out of context
+/// was skipped by the invisible pass as a "variation_selector" on the
+/// assumption the payload rules owned it, but no stego alphabet contains
+/// U+180B..=U+180F, so nothing was reported while the cleaner stripped it.
+#[cfg(test)]
+mod fvs_gap_regression {
+    use super::*;
+
+    #[test]
+    fn stray_mongolian_fvs_is_reported_as_an_invisible_carrier() {
+        let findings = check_text("a\u{180F}b", &TextPolicy::default());
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].rule_id, RULE_INVISIBLE);
+        assert!(findings[0].label.contains("variation_selector"));
+        assert_eq!(findings[0].replacement.as_deref(), Some(""));
+    }
+
+    #[test]
+    fn mongolian_fvs_after_its_own_script_stays_silent() {
+        assert!(check_text("\u{1820}\u{180F}", &TextPolicy::default()).is_empty());
+    }
+}
