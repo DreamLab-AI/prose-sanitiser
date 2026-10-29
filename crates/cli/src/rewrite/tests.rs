@@ -15,6 +15,13 @@ fn wholly_different_text_diverges_completely() {
 }
 
 #[test]
+fn single_word_texts_are_distinguished_by_their_tokens() {
+    // One-word texts have no bigrams, so the tokens themselves must decide.
+    assert_eq!(lexical_divergence("alpha", "alpha"), 0.0);
+    assert_eq!(lexical_divergence("alpha", "beta"), 1.0);
+}
+
+#[test]
 fn partial_rewrites_land_between_the_extremes() {
     let score = lexical_divergence("the cat sat on the mat", "the cat perched on the mat");
     assert!(score > 0.0 && score < 1.0, "got {score}");

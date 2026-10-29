@@ -65,7 +65,9 @@ pub fn lexical_divergence(original: &str, candidate: &str) -> f64 {
     let intersection = ba.iter().filter(|item| bb.contains(item)).count();
     let union = ba.len() + bb.len() - intersection;
     if union == 0 {
-        return 0.0;
+        // A zero union means both sides tokenised to a single token, so
+        // bigrams cannot tell them apart; the tokens themselves must.
+        return if a == b { 0.0 } else { 1.0 };
     }
     1.0 - intersection as f64 / union as f64
 }
