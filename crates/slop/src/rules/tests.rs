@@ -168,7 +168,8 @@ fn the_refreshed_lexicon_catches_the_inflections_the_old_table_missed() {
     }
     // Ordinary English left out on purpose: the false-positive cost outweighs
     // the published signal.
-    for word in ["navigate", "tackle", "align", "delegate"] {
+    // Myriad is a Tier-2 cluster word, never a Tier-1 ban.
+    for word in ["navigate", "tackle", "align", "delegate", "myriad"] {
         assert!(!pattern.is_match(word), "{word} should not match");
     }
 }
