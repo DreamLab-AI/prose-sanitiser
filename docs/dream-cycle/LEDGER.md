@@ -8,3 +8,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-10-26 | slop-rules | changelog over-claimed 3 added markers (navigate/tackle/myriad); note corrected | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/2 | yes | ACCEPT |  | 21bd8800c798 |  |  |  |
 | 2026-10-28 | media-provenance | no crates/media source shown; media-provenance deep had no code to audit | NONE | NONE | yes | INCONCLUSIVE |  | d31b94e66abe |  |  |  |
 | 2026-10-29 | cli-and-server | lexical_divergence read wholly different one-word texts as identical; now 1.0 | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/3 | yes | ACCEPT |  | e4399f4d5325 |  |  |  |
+| 2026-10-30 | unicode-surgery | VETOED: tag_chars skip arm now gates on stego::is_tag_char; U+E0002..E001F… | NONE | VETOED | yes | REJECT |  | b39364e576bc |  |  |  |
