@@ -187,7 +187,9 @@ pub fn category_code(character: char) -> &'static str {
 /// complex scripts. They are *not* meaningful in Latin: a ZWJ next to é, ñ
 /// or ü is suspicious, not orthographic, so Latin letters (both basic ASCII
 /// and Extended A/B/Additional) are excluded. Greek and Cyrillic are excluded
-/// for the same reason — they use no joiners.
+/// for the same reason — they use no joiners. So are the Inherited blocks
+/// that ride on Latin text — spacing modifier letters and combining
+/// diacritics, which carry the decomposed forms of é, ñ and ü.
 fn is_joining_letter(unit: Unit) -> bool {
     match unit.as_char() {
         Some(ch) => {
@@ -198,6 +200,15 @@ fn is_joining_letter(unit: Unit) -> bool {
                 return false;
             }
             if (0x0370..=0x03FF).contains(&cp) || (0x0400..=0x04FF).contains(&cp) {
+                return false;
+            }
+            // Exclude the Inherited blocks that ride on Latin text: spacing
+            // modifier letters (U+02B0..=U+02FF) and combining diacritics
+            // (U+0300..=U+036F, U+1AB0..=U+1AFF, U+1DC0..=U+1DFF). Without
+            // this, only the precomposed forms of é, ñ and ü are excluded and
+            // a decomposed one legitimises a neighbouring joiner. None of
+            // these blocks serves a script that uses joiners orthographically.
+            if matches!(cp, 0x02B0..=0x036F | 0x1AB0..=0x1AFF | 0x1DC0..=0x1DFF) {
                 return false;
             }
             matches!(
