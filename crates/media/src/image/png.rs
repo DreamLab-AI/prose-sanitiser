@@ -71,6 +71,11 @@ impl InflateBudget {
         // rather than silently truncated into a false negative.
         let mut reader = flate2::read::ZlibDecoder::new(data).take(allowance + 1);
         if reader.read_to_end(&mut out).is_err() {
+            // The stream may already have inflated up to the allowance
+            // before failing; that work is real, so the budget pays for it.
+            // Without the charge, a file of corrupt streams would inflate
+            // past the per-file cap one chunk at a time.
+            self.remaining = self.remaining.saturating_sub(out.len() as u64);
             return None;
         }
         if out.len() as u64 > allowance {
@@ -491,5 +496,33 @@ mod tests {
     fn crc32_matches_the_known_png_value() {
         // CRC of an empty IEND chunk is the well-known 0xAE426082.
         assert_eq!(crc32(b"IEND"), 0xAE42_6082);
+    }
+
+    #[test]
+    fn a_corrupt_stream_still_charges_the_inflate_budget() {
+        // One zlib stream holding 600 KiB of zeros, with the last eight
+        // bytes cut: it decodes nearly the whole payload and then fails,
+        // staying under the 1 MiB per-chunk cap every time.
+        let level = flate2::Compression::new(9);
+        let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), level);
+        let zeros = vec![0u8; 600 * 1024];
+        std::io::Write::write_all(&mut encoder, &zeros).unwrap();
+        let whole = encoder.finish().unwrap();
+        let mut corrupt = whole.clone();
+        corrupt.truncate(corrupt.len() - 8);
+
+        let mut budget = super::InflateBudget::new();
+        assert!(budget.inflate(&corrupt).is_none());
+        // The refused stream still inflated real bytes; the budget must
+        // have paid for them, or many refusals would bypass the per-file cap.
+        assert!(budget.remaining < super::MAX_TEXT_INFLATED_TOTAL_BYTES);
+
+        // Sixteen such streams inflate past the 8 MiB per-file budget
+        // between them, so the budget ends spent and a valid stream is
+        // refused rather than decoded.
+        for _ in 0..16 {
+            assert!(budget.inflate(&corrupt).is_none());
+        }
+        assert!(budget.inflate(&whole).is_none());
     }
 }
