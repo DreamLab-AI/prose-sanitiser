@@ -91,6 +91,20 @@ impl Gazetteer {
     ///
     /// Duplicates are dropped, and names are ordered longest first so that a
     /// name containing another is matched whole.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use prose_sanitiser_uk::gazetteer::Gazetteer;
+    ///
+    /// // A house list may begin a name with a multi-byte character, and the
+    /// // scan has to resume on a UTF-8 boundary after matching it.
+    /// let gazetteer = Gazetteer::new(&["École Normale Supérieure"]);
+    /// let text = "The École Normale Supérieure met.";
+    /// let spans = gazetteer.spans(text);
+    /// assert_eq!(spans.len(), 1);
+    /// assert_eq!(&text[spans[0].0..spans[0].1], "École Normale Supérieure");
+    /// ```
     pub fn new<S: AsRef<str>>(extra: &[S]) -> Self {
         let mut names: Vec<String> = ORGANISATIONS
             .iter()
@@ -140,7 +154,9 @@ impl Gazetteer {
                 if is_word_bounded(document, start, end) {
                     spans.push((start, end));
                 }
-                from = start + 1;
+                // Resume after the match: `end` is always a UTF-8 boundary,
+                // whereas `start + 1` can sit inside a multi-byte character.
+                from = end;
                 if from >= document.len() {
                     break;
                 }
