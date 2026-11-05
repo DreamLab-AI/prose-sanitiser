@@ -59,10 +59,11 @@ pub use prose_sanitiser_core::Severity;
 /// evidence, not an API. Bump it in the same commit as any change to [`RULES`],
 /// [`TIER2`], [`TRANSITIONS`] or the structural thresholds, and add a
 /// [`CHANGELOG`] entry saying what moved and on what evidence.
-pub const RULESET_VERSION: &str = "2026.09.03";
+pub const RULESET_VERSION: &str = "2026.11.01";
 
-/// The date the tables were last checked against their sources in full.
-pub const RULESET_REVIEWED: &str = "2026-09-03";
+/// The date the tables were last checked against their sources; the CHANGELOG
+/// entry of the same date records the scope of that check.
+pub const RULESET_REVIEWED: &str = "2026-11-01";
 
 /// One entry in the ruleset history.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -77,6 +78,16 @@ pub struct ChangelogEntry {
 
 /// What changed between ruleset versions, newest first.
 pub const CHANGELOG: &[ChangelogEntry] = &[
+    ChangelogEntry {
+        version: "2026.11.01",
+        date: "2026-11-01",
+        notes: &[
+            "Tier-1 vocabulary: honest, honestly and honesty removed. The 2026-09-03 refresh limited additions to markers with a published excess-frequency measurement and no cited source names these three; they are ordinary English, so their false-positive cost outweighs the unmeasured signal.",
+            "One phrase now fires one rule: 'in other words' and 'put simply' are removed from claudish-structure and reported by preamble-label alone, whose label and fix advice already name both phrases; until now each matched two rules at once, doubling the finding count without adding signal.",
+            "Known residual, deliberately untouched: 'to put it simply' and 'to put it another way' still match both preamble-label and claudish-structure; whether to deduplicate them is an open decision.",
+            "Scope: two operator-approved corrections. No rule was added or removed (the table stays at 15) and no severity, tier, threshold or density budget changed; the structural measures and the aggregate rules keep their 2026-09-03 review dates.",
+        ],
+    },
     ChangelogEntry {
         version: "2026.09.03",
         date: "2026-09-03",
