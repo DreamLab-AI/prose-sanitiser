@@ -14,3 +14,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-02 | uk-english | Gazetteer::spans panicked on caller names with a multi-byte first char; fixed | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/7 | yes | ACCEPT |  | 5c2d014eec19 |  |  |  |
 | 2026-11-03 | media-provenance | InflateBudget never charged corrupt-stream inflate work; error path now pays | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/8 | yes | ACCEPT |  | b95c03e2cc5d |  |  |  |
 | 2026-11-04 | cli-and-server | VETOED: audit: unreadable files get kind "error", no longer counted as scanned… | NONE | VETOED | yes | REJECT |  | e063e1cb5e79 |  |  |  |
+| 2026-11-05 | unicode-surgery | is_joining_letter kept joiners after NFD Latin (U+02B0..036F etc); now excluded | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/9 | yes | ACCEPT |  | 69ded3fb83a4 |  |  |  |
