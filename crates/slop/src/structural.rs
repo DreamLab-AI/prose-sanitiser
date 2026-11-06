@@ -375,7 +375,7 @@ impl StructuralMetrics {
         }
 
         let negative_rate = self.rate(self.negative_parallelisms);
-        if negative_rate > NEGATIVE_PARALLELISM_RATE_2026 {
+        if self.rates_are_meaningful() && negative_rate > NEGATIVE_PARALLELISM_RATE_2026 {
             push(
                 "structural-negative-parallelism-density",
                 format!("{negative_rate:.2} negative parallelisms per 10,000 words"),
@@ -386,7 +386,7 @@ impl StructuralMetrics {
         }
 
         let tricolon_rate = self.rate(self.tricolons);
-        if tricolon_rate > TRICOLON_BUDGET {
+        if self.rates_are_meaningful() && tricolon_rate > TRICOLON_BUDGET {
             push(
                 "structural-tricolon-density",
                 format!("{tricolon_rate:.2} three-item lists per 10,000 words"),
