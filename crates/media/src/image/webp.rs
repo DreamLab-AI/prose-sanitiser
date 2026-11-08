@@ -126,6 +126,16 @@ pub fn inspect_webp(data: &[u8]) -> (bool, bool, Vec<String>) {
             }
         }
     }
+
+    // Whole-file scan fallback, mirroring `inspect_png` and `inspect_jpeg`:
+    // the chunk walk opens only the C2PA/XMP/EXIF chunks, so a manifest
+    // riding in any other chunk is invisible to it — without this scan the
+    // same bytes a PNG or JPEG reports would pass a WebP silently.
+    let whole = contains_any(data, super::markers::C2PA_MARKERS);
+    if !whole.is_empty() && !has_c2pa {
+        has_c2pa = true;
+        findings.push(format!("byte-scan C2PA markers: {}", join_hits(&whole, 6)));
+    }
     (has_c2pa, has_ai || has_c2pa, findings)
 }
 
@@ -279,6 +289,20 @@ mod tests {
         let (_, ai, findings) = inspect_webp(&webp);
         assert!(ai);
         assert!(findings.iter().any(|f| f.starts_with("WebP XMP : ")));
+    }
+
+    #[test]
+    fn a_marker_outside_the_scanned_chunks_is_a_byte_scan_hit() {
+        // Parity with inspect_png and inspect_jpeg: the chunk walk opens only
+        // the C2PA/XMP/EXIF chunks, so a manifest riding in an unknown chunk
+        // must still be caught by the whole-file scan.
+        let webp = webp_with(0, &[(b"zzUk", b"contentcredentials")]);
+        let (c2pa, ai, findings) = inspect_webp(&webp);
+        assert!(c2pa);
+        assert!(ai);
+        assert!(findings
+            .iter()
+            .any(|f| f.starts_with("byte-scan C2PA markers: ")));
     }
 
     #[test]
