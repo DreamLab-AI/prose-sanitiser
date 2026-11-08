@@ -17,3 +17,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-05 | unicode-surgery | is_joining_letter kept joiners after NFD Latin (U+02B0..036F etc); now excluded | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/9 | yes | ACCEPT |  | 69ded3fb83a4 |  |  |  |
 | 2026-11-06 | slop-rules | negative-parallelism/tricolon densities fired below the 250-word minimum; gated | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/11 | yes | ACCEPT |  | e75290ea7740 |  |  |  |
 | 2026-11-07 | uk-english | bare sense pair after a copula (is/was/be) was scored as a verb; now a noun | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/12 | yes | ACCEPT |  | 16fd64aaede7 |  |  |  |
+| 2026-11-08 | media-provenance | inspect_webp missed C2PA markers outside C2PA/XMP/EXIF chunks; byte-scan added | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/13 | yes | ACCEPT |  | 64a360f89d9c |  |  |  |
