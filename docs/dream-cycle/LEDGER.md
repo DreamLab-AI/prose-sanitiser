@@ -19,3 +19,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-07 | uk-english | bare sense pair after a copula (is/was/be) was scored as a verb; now a noun | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/12 | yes | ACCEPT |  | 16fd64aaede7 |  |  |  |
 | 2026-11-08 | media-provenance | inspect_webp missed C2PA markers outside C2PA/XMP/EXIF chunks; byte-scan added | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/13 | yes | ACCEPT |  | 64a360f89d9c |  |  |  |
 | 2026-11-09 | cli-and-server | Environment fault, hypothesis untested: connected node annexe unhealthy: SSH com | NONE | NONE | blocked | BLOCKED-ENV |  | BLOCKED |  |  |  |
+| 2026-11-10 | unicode-surgery | decomposed-Latin joiners (e+U+0301 then ZWNJ/ZWJ) pinned as must-strip in tests | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/14 | yes | ACCEPT |  | 6cab7c184466 |  |  |  |
