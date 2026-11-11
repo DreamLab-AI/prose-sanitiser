@@ -464,10 +464,10 @@ mod tests {
         assert_eq!(decide_char('\u{200C}', Some('a')).action, Action::Strip);
     }
 
-    // Operator pin (approved 2026-11-05): the joining-letter predicate
-    // excludes the U+02B0..U+036F block, so a joiner whose previously kept
-    // unit is a decomposed-Latin combining mark is contraband rather than
-    // orthography. This pins the exclusion merged in prose-sanitiser #9.
+    // Regression pin: the joining-letter predicate excludes the
+    // U+02B0..U+036F block, so a joiner whose previously kept unit is a
+    // decomposed-Latin combining mark is contraband rather than orthography.
+    // This pins the exclusion merged in prose-sanitiser #9.
     #[test]
     fn strips_joiners_after_decomposed_latin_diacritics() {
         assert_eq!(

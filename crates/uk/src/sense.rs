@@ -79,6 +79,14 @@ const VERB_MARKERS: &[&str] = &[
     "i", "we", "you", "they", "he", "she", "it", "who", "please", "let", "help",
 ];
 
+/// Copulas: a bare sense pair directly after one is a predicate nominative.
+///
+/// The verb readings of these pairs are inflected (practising, licensed) and
+/// have table entries of their own, so the uninflected form that follows a
+/// copula is the noun: the secret is practice, not practise. Copulas remain in
+/// VERB_MARKERS, where the wider window weighs them by distance.
+const COPULAS: &[&str] = &["am", "is", "are", "was", "were", "be", "been", "being"];
+
 /// Prepositions that make the following word a noun.
 const PREPOSITIONS: &[&str] = &[
     "of", "for", "in", "on", "at", "with", "without", "under", "by", "from", "into", "onto",
@@ -159,6 +167,22 @@ const POS_WINDOW: usize = 3;
 /// let start = document.find("license").unwrap();
 /// let entry = table::lookup("license").unwrap();
 /// let verdict = resolve(document, Span::new(start, start + 7), entry, Dialect::Ise);
+/// assert_eq!(verdict, Verdict::CorrectAsWritten);
+/// ```
+///
+/// A bare sense pair directly after a copula is a predicate nominative: the
+/// progressive and passive readings are inflected forms with their own table
+/// entries, so the uninflected spelling after *is* or *was* is the noun.
+///
+/// ```
+/// use prose_sanitiser_uk::sense::{resolve, Verdict};
+/// use prose_sanitiser_uk::table::{self, Dialect};
+/// use prose_sanitiser_core::Span;
+///
+/// let document = "The secret is practice.";
+/// let start = document.find("practice").unwrap();
+/// let entry = table::lookup("practice").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
 /// assert_eq!(verdict, Verdict::CorrectAsWritten);
 /// ```
 pub fn resolve(document: &str, span: Span, entry: &Entry, dialect: Dialect) -> Verdict {
@@ -315,13 +339,18 @@ fn detect_pos(document: &str, span: Span) -> Option<Pos> {
 
 /// What the word directly before the occurrence settles, if anything.
 ///
-/// Four outcomes, in order. A verb marker or an adverb makes it a verb; a
-/// determiner or a preposition makes it a noun; a conjunction settles nothing
-/// and defers to the wider window; anything else is a content word, which in
-/// this position is an adjective or a noun modifier, and either way the
-/// occurrence heads the phrase.
+/// Five outcomes, in order. A copula makes it a noun, because a bare sense
+/// pair directly after a copula is a predicate nominative rather than a
+/// verb; a verb marker or an adverb makes it a verb; a determiner or a
+/// preposition makes it a noun; a conjunction settles nothing and defers to
+/// the wider window; anything else is a content word, which in this position
+/// is an adjective or a noun modifier, and either way the occurrence heads
+/// the phrase.
 fn immediate_reading(word: &str) -> Option<Pos> {
     let lower = word.to_lowercase();
+    if COPULAS.contains(&lower.as_str()) {
+        return Some(Pos::Noun);
+    }
     if VERB_MARKERS.contains(&lower.as_str()) || ADVERB_MARKERS.contains(&lower.as_str()) {
         return Some(Pos::Verb);
     }
