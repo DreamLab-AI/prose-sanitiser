@@ -464,6 +464,26 @@ mod tests {
         assert_eq!(decide_char('\u{200C}', Some('a')).action, Action::Strip);
     }
 
+    // Regression pin: the joining-letter predicate excludes the
+    // U+02B0..U+036F block, so a joiner whose previously kept unit is a
+    // decomposed-Latin combining mark is contraband rather than orthography.
+    // This pins the exclusion merged in prose-sanitiser #9.
+    #[test]
+    fn strips_joiners_after_decomposed_latin_diacritics() {
+        assert_eq!(
+            decide_char('\u{200C}', Some('\u{0301}')).action,
+            Action::Strip
+        );
+        assert_eq!(
+            decide_char('\u{200D}', Some('\u{0301}')).action,
+            Action::Strip
+        );
+        assert_eq!(
+            decide_char('\u{200C}', Some('\u{036F}')).action,
+            Action::Strip
+        );
+    }
+
     #[test]
     fn keeps_same_script_fillers_only_after_their_own_script() {
         // Mongolian FVS after a Mongolian letter, Khmer vowel after Khmer,
