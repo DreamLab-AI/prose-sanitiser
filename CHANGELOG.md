@@ -7,6 +7,40 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-11-11
+
+### Security
+
+- **pulldown-cmark 0.13.6 for RUSTSEC-2026-0433.** 0.13.5 parses nested image
+  wikilinks (`![[![[...]]]]`) in quadratic time under `ENABLE_WIKILINKS`. The
+  workspace requirement floor is now 0.13.6, so downstream resolution of the
+  published crates cannot select the vulnerable release.
+- **A corrupt PNG stream now charges the inflate budget.** `InflateBudget`
+  never billed work done by a stream that inflated and then failed, so a file
+  of corrupt streams could inflate past the per-file cap one chunk at a time.
+
+### Fixed
+
+- **`inspect_webp` falls back to a whole-file marker scan**, matching
+  `inspect_png` and `inspect_jpeg`. A C2PA manifest in a chunk other than
+  C2PA, XMP or EXIF was invisible to the chunk walk and passed a WebP silently.
+- **Decomposed Latin no longer legitimises a neighbouring joiner.** The
+  joining-letter predicate now excludes the Inherited blocks that ride on Latin
+  text (spacing modifier letters and combining diacritics), so e followed by
+  U+0301 and then a ZWNJ or ZWJ is treated like the precomposed form.
+- **`Gazetteer::spans` no longer panics** on a caller name that begins with a
+  multi-byte character; the scan resumes on a UTF-8 boundary.
+- **A bare sense pair after a copula** (is, was, be) is now read as a noun
+  (the secret is practice), not scored as a verb.
+
+### Changed
+
+- **Slop rules: one phrase fires one rule.** "In other words" and "put simply"
+  leave `claudish-structure` and are reported by `preamble-label` alone;
+  "to put it simply" and "to put it another way" now fire `preamble-label`
+  only, as "this" joins "it" in the arm. `honest`, `honestly` and `honesty`
+  leave tier 1: no cited source names them. The rule table stays at 15.
+
 ## [0.1.5] - 2026-10-29
 
 ### Security
