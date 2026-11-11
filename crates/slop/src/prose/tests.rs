@@ -366,3 +366,24 @@ fn front_matter_is_only_recognised_on_the_first_line() {
         .iter()
         .any(|f| f.label == "Em-dash density over threshold"));
 }
+
+#[test]
+fn one_phrase_fires_one_rule_for_the_to_put_it_family() {
+    // 'to put it simply' and 'to put it another way' are preamble-label's;
+    // claudish-structure co-matched both, so one phrase scored twice.
+    for phrase in [
+        "To put it simply, this is wrong.",
+        "To put it another way, no.",
+        "To put this simply, no.",
+    ] {
+        let result = scan_text(&format!("{phrase} It rained."), Severity::Low);
+        let ids = rule_ids(&result);
+        assert!(ids.contains(&"preamble-label".to_string()), "{phrase}");
+        assert!(!ids.contains(&"claudish-structure".to_string()), "{phrase}");
+    }
+    // The variants claudish-structure kept still fire it, and only it.
+    let result = scan_text("To put it differently, no. It rained.", Severity::Low);
+    let ids = rule_ids(&result);
+    assert!(ids.contains(&"claudish-structure".to_string()));
+    assert!(!ids.contains(&"preamble-label".to_string()));
+}

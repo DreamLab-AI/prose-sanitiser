@@ -43,7 +43,10 @@ pub const RULES: &[Rule] = &[
             r"\bin a nutshell\b",
             r"\bat a high level\b",
             r"\bin other words\b",
-            r"\bto put it (?:another way|simply|plainly)\b",
+            // 'this' joins 'it' here on 2026-11-11: the claudish-structure
+            // 'to put' arm below gave up 'simply' and 'another way', and no
+            // variant of the phrase should go unreported.
+            r"\bto put (?:it|this) (?:another way|simply|plainly)\b",
             r"\bthe idea in brief\b",
             r"\blong story short\b",
         ],
@@ -302,7 +305,7 @@ pub const RULES: &[Rule] = &[
             r"\bwhether\s+you'?re\b[^.?!]{5,60}?\bor\b",
             r"\bthink\s+of\s+(it|this)\s+as\b",
             r"\bput\s+(differently|another\s+way)\b",
-            r"\bto\s+put\s+(it|this)\s+(simply|differently|another\s+way|in\s+perspective)\b",
+            r"\bto\s+put\s+(?:it|this)\s+(?:differently|in\s+perspective)\b",
         ],
         dynamic: None,
         cased: false,
