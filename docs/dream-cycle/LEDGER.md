@@ -20,3 +20,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-08 | media-provenance | inspect_webp missed C2PA markers outside C2PA/XMP/EXIF chunks; byte-scan added | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/13 | yes | ACCEPT |  | 64a360f89d9c |  |  |  |
 | 2026-11-09 | cli-and-server | Environment fault, hypothesis untested: connected node annexe unhealthy: SSH com | NONE | NONE | blocked | BLOCKED-ENV |  | BLOCKED |  |  |  |
 | 2026-11-10 | unicode-surgery | decomposed-Latin joiners (e+U+0301 then ZWNJ/ZWJ) pinned as must-strip in tests | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/14 | yes | ACCEPT |  | 6cab7c184466 |  |  |  |
+| 2026-11-11 | slop-rules | 'to put it simply/another way' fired two rules; claudish-structure arm narrowed | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/15 | yes | ACCEPT |  | 8d1c16b4110a |  |  |  |
