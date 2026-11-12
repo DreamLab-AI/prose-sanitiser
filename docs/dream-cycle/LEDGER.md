@@ -21,3 +21,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-09 | cli-and-server | Environment fault, hypothesis untested: connected node annexe unhealthy: SSH com | NONE | NONE | blocked | BLOCKED-ENV |  | BLOCKED |  |  |  |
 | 2026-11-10 | unicode-surgery | decomposed-Latin joiners (e+U+0301 then ZWNJ/ZWJ) pinned as must-strip in tests | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/14 | yes | ACCEPT |  | 6cab7c184466 |  |  |  |
 | 2026-11-11 | slop-rules | 'to put it simply/another way' fired two rules; claudish-structure arm narrowed | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/15 | yes | ACCEPT |  | 8d1c16b4110a |  |  |  |
+| 2026-11-12 | uk-english | have/has/had before a bare sense pair now reads as noun (copula branch) | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/16 | yes | ACCEPT |  | a838e311103c |  |  |  |
