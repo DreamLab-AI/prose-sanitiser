@@ -118,10 +118,7 @@ pub fn is_cms_generator_meta(tag: &[u8]) -> bool {
         return false;
     }
     let content = lookup("content").unwrap_or_default();
-    if generator_ai_re().is_match(&content) || generator_ai_re().is_match(tag) {
-        return false;
-    }
-    true
+    !(generator_ai_re().is_match(&content) || generator_ai_re().is_match(tag))
 }
 
 /// The first `limit` characters of a lossily decoded slice.
