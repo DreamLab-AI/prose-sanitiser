@@ -39,6 +39,7 @@ fn extension_for_kind(kind: &str) -> &'static str {
     match kind {
         "png" => ".png",
         "jpeg" => ".jpg",
+        "webp" => ".webp",
         "svg" => ".svg",
         "pdf" => ".pdf",
         "docx" => ".docx",
@@ -79,6 +80,7 @@ pub fn guess_kind(url: &str, data: &[u8], content_type: Option<&str>) -> String 
         value if value.contains("html") => Some("html"),
         "image/png" => Some("png"),
         "image/jpeg" => Some("jpeg"),
+        "image/webp" => Some("webp"),
         value if value.contains("svg") => Some("svg"),
         "application/pdf" => Some("pdf"),
         value if value.contains("wordprocessingml") => Some("docx"),
@@ -98,6 +100,7 @@ pub fn guess_kind(url: &str, data: &[u8], content_type: Option<&str>) -> String 
         (".png", "png"),
         (".jpg", "jpeg"),
         (".jpeg", "jpeg"),
+        (".webp", "webp"),
         (".svg", "svg"),
         (".pdf", "pdf"),
         (".docx", "docx"),
@@ -118,6 +121,9 @@ pub fn guess_kind(url: &str, data: &[u8], content_type: Option<&str>) -> String 
     }
     if data.starts_with(b"\xff\xd8") {
         return "jpeg".to_string();
+    }
+    if data.starts_with(b"RIFF") && data.get(8..12) == Some(b"WEBP") {
+        return "webp".to_string();
     }
     if data.starts_with(b"%PDF") {
         return "pdf".to_string();
