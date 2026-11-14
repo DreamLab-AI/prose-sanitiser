@@ -156,6 +156,20 @@ fn the_human_report_renders_the_python_dict_shape() {
 }
 
 #[test]
+fn the_website_classifier_recognises_webp() {
+    use crate::audit::website::guess_kind;
+
+    let webp = b"RIFF\x00\x00\x00\x00WEBPVP8 ";
+    assert_eq!(guess_kind("https://x.example/a.webp", webp, None), "webp");
+    assert_eq!(guess_kind("https://x.example/a", webp, Some("image/webp")), "webp");
+    assert_eq!(guess_kind("https://x.example/a", webp, None), "webp");
+
+    // A RIFF container that is not WebP is not an image.
+    let wav = b"RIFF\x00\x00\x00\x00WAVEfmt ";
+    assert_eq!(guess_kind("https://x.example/a", wav, None), "text");
+}
+
+#[test]
 fn the_walk_is_sorted_pre_order_and_skips_noise_directories() {
     let dir = tempfile::tempdir().unwrap();
     write(dir.path(), "b.txt", b"x");
