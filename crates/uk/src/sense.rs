@@ -79,13 +79,20 @@ const VERB_MARKERS: &[&str] = &[
     "i", "we", "you", "they", "he", "she", "it", "who", "please", "let", "help",
 ];
 
-/// Copulas: a bare sense pair directly after one is a predicate nominative.
+/// Copulas and the auxiliaries *have*, *has* and *had*: a bare sense pair
+/// directly after one is a noun.
 ///
 /// The verb readings of these pairs are inflected (practising, licensed) and
 /// have table entries of their own, so the uninflected form that follows a
-/// copula is the noun: the secret is practice, not practise. Copulas remain in
-/// VERB_MARKERS, where the wider window weighs them by distance.
-const COPULAS: &[&str] = &["am", "is", "are", "was", "were", "be", "been", "being"];
+/// copula is the noun: the secret is practice, not practise. The auxiliaries
+/// earn the same reading when the pair follows immediately: the perfect tense
+/// needs a participle (*she had practised*) and the causative an object in
+/// between (*she had them practise*), so the bare form straight after the
+/// auxiliary is the noun (*she had practice every Tuesday*). All of them
+/// remain in VERB_MARKERS, where the wider window weighs them by distance.
+const COPULAS: &[&str] = &[
+    "am", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+];
 
 /// Prepositions that make the following word a noun.
 const PREPOSITIONS: &[&str] = &[
@@ -184,6 +191,43 @@ const POS_WINDOW: usize = 3;
 /// let entry = table::lookup("practice").unwrap();
 /// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
 /// assert_eq!(verdict, Verdict::CorrectAsWritten);
+/// ```
+///
+/// The auxiliaries *have*, *has* and *had* behave the same way when the pair
+/// follows immediately: the perfect tense needs an inflected participle and
+/// the causative an object in between, so the bare form after the auxiliary
+/// is the noun.
+///
+/// ```
+/// use prose_sanitiser_uk::sense::{resolve, Verdict};
+/// use prose_sanitiser_uk::table::{self, Dialect};
+/// use prose_sanitiser_core::Span;
+///
+/// let document = "She had practice every Tuesday.";
+/// let start = document.find("practice").unwrap();
+/// let entry = table::lookup("practice").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
+/// assert_eq!(verdict, Verdict::CorrectAsWritten);
+///
+/// let document = "The choir has practice at dawn.";
+/// let start = document.find("practice").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
+/// assert_eq!(verdict, Verdict::CorrectAsWritten);
+/// ```
+///
+/// When the noun reading carries a correction, it is the noun's correction
+/// that is suggested.
+///
+/// ```
+/// use prose_sanitiser_uk::sense::{resolve, Verdict};
+/// use prose_sanitiser_uk::table::{self, Dialect};
+/// use prose_sanitiser_core::Span;
+///
+/// let document = "The crew had license to sail.";
+/// let start = document.find("license").unwrap();
+/// let entry = table::lookup("license").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 7), entry, Dialect::Ise);
+/// assert!(matches!(verdict, Verdict::Suggest { target: "licence", .. }));
 /// ```
 pub fn resolve(document: &str, span: Span, entry: &Entry, dialect: Dialect) -> Verdict {
     let senses = entry.senses();

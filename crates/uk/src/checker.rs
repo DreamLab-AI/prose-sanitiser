@@ -108,6 +108,21 @@ pub const FIXABILITY: &[(&str, Fixability)] = &[];
 ///
 /// // A sense that resolves to correct British English: silence.
 /// assert!(checker.check("The gas meter was replaced.", &Config::new()).is_empty());
+///
+/// // A bare sense pair straight after have/has/had is the noun, so the
+/// // perfect-tense false positive is gone: "she had practice" stays silent.
+/// assert!(checker
+///     .check("She had practice every Tuesday.", &Config::new())
+///     .is_empty());
+///
+/// // The causative and perfect keep an object or a participle between the
+/// // auxiliary and the verb, and their British spellings are already right.
+/// assert!(checker
+///     .check("She had them practise their scales.", &Config::new())
+///     .is_empty());
+/// assert!(checker
+///     .check("He has practised medicine for years.", &Config::new())
+///     .is_empty());
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct UkEnglish {
