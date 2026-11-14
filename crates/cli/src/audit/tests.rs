@@ -161,7 +161,10 @@ fn the_website_classifier_recognises_webp() {
 
     let webp = b"RIFF\x00\x00\x00\x00WEBPVP8 ";
     assert_eq!(guess_kind("https://x.example/a.webp", webp, None), "webp");
-    assert_eq!(guess_kind("https://x.example/a", webp, Some("image/webp")), "webp");
+    assert_eq!(
+        guess_kind("https://x.example/a", webp, Some("image/webp")),
+        "webp"
+    );
     assert_eq!(guess_kind("https://x.example/a", webp, None), "webp");
 
     // A RIFF container that is not WebP is not an image.
