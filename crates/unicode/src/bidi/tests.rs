@@ -152,6 +152,27 @@ fn rtl_detection_covers_hebrew_arabic_and_syriac() {
 }
 
 #[test]
+fn arabic_extended_b_is_rtl_so_its_isolates_are_preserved_in_prose() {
+    // Arabic Extended-B (U+0870..U+089F) is right-to-left script, but it was
+    // missing from the alphabet, so prose whose only RTL characters came from
+    // that block had every bidi control reported as no-rtl-context and then
+    // stripped: the mirror image of a hidden carrier is a hidden preserver.
+    assert!(is_rtl_char(0x0870)); // Arabic Extended-B, added in Unicode 14
+    assert!(!is_rtl_char(0x086F)); // the unassigned gap below the block
+    let report = prose("\u{2067}\u{0870}\u{2069}");
+    assert!(report.hits.is_empty());
+    assert_eq!(report.preserved, vec![0, 2]);
+    // Widening prose preservation must not leak into code policy: the same
+    // bytes in source code are still the Trojan Source attack.
+    let code_report = code("\u{2067}\u{0870}\u{2069}");
+    assert_eq!(code_report.hits.len(), 2);
+    assert!(code_report
+        .hits
+        .iter()
+        .all(|hit| hit.fault == BidiFault::InCode));
+}
+
+#[test]
 fn undecodable_bytes_are_skipped_without_panicking() {
     let mut raw = "\u{2067}".as_bytes().to_vec();
     raw.push(0xFF);
