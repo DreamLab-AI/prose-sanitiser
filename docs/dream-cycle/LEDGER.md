@@ -26,3 +26,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-14 | cli-and-server | audit-website classifier missed WebP (type, suffix, magic); image routing added | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/17 | yes | ACCEPT |  | 076cc6d89a0e |  |  |  |
 | 2026-11-15 | unicode-surgery | Arabic Ext-B (0870-089F) missing from is_rtl_char; RTL prose isolates stripped | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/19 | yes | ACCEPT |  | 0ef81d459a40 |  |  |  |
 | 2026-11-16 | slop-rules | ruleset 2026.11.11 backfills the 2026-11-11 claudish-structure dedup (#15) | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/20 | yes | ACCEPT |  | 9516b43d40c3 |  |  |  |
+| 2026-11-17 | uk-english | VETOED: adverb between copula and bare sense pair forced verb reading; copula… | NONE | NONE | yes | BLOCKED-ENV |  | c0afcc0bf09f |  |  |  |
