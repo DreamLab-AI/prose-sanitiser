@@ -28,3 +28,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-16 | slop-rules | ruleset 2026.11.11 backfills the 2026-11-11 claudish-structure dedup (#15) | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/20 | yes | ACCEPT |  | 9516b43d40c3 |  |  |  |
 | 2026-11-17 | uk-english | VETOED: adverb between copula and bare sense pair forced verb reading; copula… | NONE | NONE | yes | BLOCKED-ENV |  | c0afcc0bf09f |  |  |  |
 | 2026-11-18 | media-provenance | VETOED: WebP strip now drops non-image chunks that carry C2PA markers (was… | NONE | VETOED | yes | REJECT |  | 21f1b6ddfcdd |  |  |  |
+| 2026-11-19 | cli-and-server | audit text report now names unreadable files on an [error] line per file | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/21 | yes | ACCEPT |  | 523cc8f56e77 |  |  |  |
