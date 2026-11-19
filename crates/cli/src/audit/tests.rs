@@ -205,3 +205,21 @@ fn extra_skip_directories_are_honoured() {
     assert_eq!(found.len(), 1);
     assert!(found[0].ends_with("keep/a.txt"));
 }
+
+#[test]
+fn the_human_report_names_unreadable_files() {
+    let files = vec![
+        serde_json::json!({
+            "path": "a.md", "kind": "markdown", "has_c2pa": false,
+            "has_ai_metadata": false, "suspicious_total": 0,
+            "findings": [], "confidence": []
+        }),
+        serde_json::json!({"path": "locked.pdf", "error": "unreadable"}),
+    ];
+    let summary = aggregate(&files);
+    assert_eq!(summary["by_kind"]["error"], 1);
+    let text = human_report(&files, &summary, &[]);
+    assert!(text.contains("  [error] locked.pdf: unreadable"));
+    // A clean file still contributes no per-file line.
+    assert!(!text.contains("a.md"));
+}
