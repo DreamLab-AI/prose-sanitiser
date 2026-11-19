@@ -15,7 +15,7 @@ use super::{uk, Rule, Severity};
 /// When the table was first written, ported from the Python skill.
 const V1: &str = "2026-01-14";
 /// When the tables were last checked against their sources in full.
-const REVIEWED: &str = "2026-11-01";
+const REVIEWED: &str = "2026-11-11";
 
 /// Report only: no lexical marker is ever safe to act on unread.
 const JUDGEMENT: ConfidenceTier = ConfidenceTier::LowConfidenceJudgement;

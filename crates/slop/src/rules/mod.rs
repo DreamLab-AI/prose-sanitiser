@@ -59,11 +59,11 @@ pub use prose_sanitiser_core::Severity;
 /// evidence, not an API. Bump it in the same commit as any change to [`RULES`],
 /// [`TIER2`], [`TRANSITIONS`] or the structural thresholds, and add a
 /// [`CHANGELOG`] entry saying what moved and on what evidence.
-pub const RULESET_VERSION: &str = "2026.11.01";
+pub const RULESET_VERSION: &str = "2026.11.11";
 
 /// The date the tables were last checked against their sources; the CHANGELOG
 /// entry of the same date records the scope of that check.
-pub const RULESET_REVIEWED: &str = "2026-11-01";
+pub const RULESET_REVIEWED: &str = "2026-11-11";
 
 /// One entry in the ruleset history.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -78,6 +78,15 @@ pub struct ChangelogEntry {
 
 /// What changed between ruleset versions, newest first.
 pub const CHANGELOG: &[ChangelogEntry] = &[
+    ChangelogEntry {
+        version: "2026.11.11",
+        date: "2026-11-11",
+        notes: &[
+            "Backfilled record of the change that shipped in PR #15 on 2026-11-11 without its version bump: 'to put it simply' and 'to put it another way' now fire preamble-label alone, closing the known residual named in 2026.11.01. The claudish-structure 'to put' arm gave up 'simply' and 'another way' and keeps 'differently' and 'in perspective'; preamble-label's arm reads 'to put (it|this) (another way|simply|plainly)', so the 'to put this' variants stay reported and no form of the phrase is lost.",
+            "One phrase still fires one rule: bare 'put another way' and 'put differently' remain claudish-structure alone; 'in other words' and 'put simply' remain preamble-label alone, as settled on 2026.11.01.",
+            "Scope: the operator-approved deduplication of 2026-10-31, which asked for the removal 'with a ruleset bump' that the shipping change omitted; this entry is that bump. No rule was added or removed (the table stays at 15) and no severity, tier, threshold or density budget changed. Every rule's reviewed date moves with the bump, as the table's single review date requires; the structural measures and the aggregate rules keep their 2026-09-03 review dates.",
+        ],
+    },
     ChangelogEntry {
         version: "2026.11.01",
         date: "2026-11-01",
