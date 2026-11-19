@@ -8,9 +8,9 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
-# Both reach us only through `c2pa` (prose-sanitiser-media), which this crate
-# uses to *read* Content Credentials manifests. Neither is reachable from our
-# code paths; both are tracked upstream and the ignore is removed when c2pa
+# All reach us only through `c2pa` (prose-sanitiser-media), which this crate
+# uses to *read* Content Credentials manifests. None is reachable from our
+# code paths; all are tracked upstream and the ignore is removed when c2pa
 # drops the dependency.
 ignore = [
     # rsa: Marvin Attack timing side-channel. Only used by c2pa for signature
@@ -20,6 +20,10 @@ ignore = [
     # proc-macro-error is unmaintained: a compile-time proc-macro dependency of
     # static-iref (via c2pa); no runtime code.
     { id = "RUSTSEC-2024-0370", reason = "proc-macro-error via c2pa -> static-iref; compile-time only" },
+    # chrono is unmaintained, with no safe upgrade. It is not a direct
+    # dependency: c2pa and its rasn ASN.1 stack use it to read the timestamps
+    # in manifests we inspect. The advisory reports no vulnerability.
+    { id = "RUSTSEC-2026-0543", reason = "chrono via c2pa and rasn; unmaintained notice only, no direct use, no safe upgrade exists" },
 ]
 
 [licenses]
