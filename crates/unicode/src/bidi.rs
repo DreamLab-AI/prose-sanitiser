@@ -98,8 +98,8 @@ pub fn is_bidi_control(codepoint: u32) -> bool {
 /// Whether a character belongs to a right-to-left script.
 ///
 /// Covers the RTL blocks that appear in running prose: Hebrew, Arabic, Syriac,
-/// Thaana, N'Ko, Samaritan, Mandaic, the Arabic presentation forms, and the RTL
-/// supplementary planes.
+/// Thaana, N'Ko, Samaritan, Mandaic, Arabic Extended-A and -B, the Arabic
+/// presentation forms, and the RTL supplementary planes.
 pub fn is_rtl_char(codepoint: u32) -> bool {
     matches!(codepoint,
         0x0590..=0x05FF     // Hebrew
@@ -110,6 +110,7 @@ pub fn is_rtl_char(codepoint: u32) -> bool {
         | 0x07C0..=0x07FF   // N'Ko
         | 0x0800..=0x083F   // Samaritan
         | 0x0840..=0x085F   // Mandaic
+        | 0x0870..=0x089F   // Arabic Extended-B
         | 0x08A0..=0x08FF   // Arabic Extended-A
         | 0xFB1D..=0xFDFF   // Hebrew and Arabic presentation forms
         | 0xFE70..=0xFEFF   // Arabic Presentation Forms-B
