@@ -276,6 +276,11 @@ pub fn human_report(files: &[Value], summary: &Value, extra_header: &[(String, S
     ));
     for entry in files {
         let path = entry.get("path").and_then(Value::as_str).unwrap_or("");
+        // Unreadable files already count under "error" in the summary; name
+        // them here too, or the text report hides them.
+        if let Some(error) = entry.get("error").and_then(Value::as_str) {
+            lines.push(format!("  [error] {path}: {error}"));
+        }
         let empty = Vec::new();
         let findings = entry
             .get("findings")
