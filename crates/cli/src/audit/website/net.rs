@@ -170,8 +170,43 @@ fn is_global_v4(address: Ipv4Addr) -> bool {
         || octets[0] >= 240)
 }
 
+/// The IPv4 address carried in the low 32 bits of an IPv6 address.
+fn embedded_v4(address: Ipv6Addr) -> Ipv4Addr {
+    let octets = address.octets();
+    Ipv4Addr::new(octets[12], octets[13], octets[14], octets[15])
+}
+
 fn is_global_v6(address: Ipv6Addr) -> bool {
     let segments = address.segments();
+    // Transition ranges that carry an IPv4 address (COV-A-F8). Without these an
+    // attacker-controlled AAAA record such as `64:ff9b::7f00:1`, `2002:7f00:1::`
+    // or a Teredo address would pass as "global" while a translator or tunnel
+    // delivers the connection to an internal IPv4 host.
+    //
+    // 64:ff9b::/96 NAT64 (RFC 6052): global only if the embedded IPv4 is.
+    if segments[0] == 0x0064 && segments[1] == 0xFF9B && segments[2..6].iter().all(|s| *s == 0) {
+        return is_global_v4(embedded_v4(address));
+    }
+    // 64:ff9b:1::/48 local-use NAT64 (RFC 8215): never public.
+    if segments[0] == 0x0064 && segments[1] == 0xFF9B && segments[2] == 0x0001 {
+        return false;
+    }
+    // 2002::/16 6to4 (RFC 3056): the IPv4 address is in bits 16..48.
+    if segments[0] == 0x2002 {
+        let octets = address.octets();
+        return is_global_v4(Ipv4Addr::new(octets[2], octets[3], octets[4], octets[5]));
+    }
+    // 2001::/32 Teredo (RFC 4380): tunnels to arbitrary IPv4 hosts and is
+    // deprecated; refused outright rather than unpacking the server and the
+    // obfuscated client address.
+    if segments[0] == 0x2001 && segments[1] == 0x0000 {
+        return false;
+    }
+    // ::a.b.c.d IPv4-compatible (RFC 4291, deprecated): same embedded-address rule.
+    if segments[..6].iter().all(|s| *s == 0) && !address.is_unspecified() && !address.is_loopback()
+    {
+        return is_global_v4(embedded_v4(address));
+    }
     !(address.is_unspecified()
         || address.is_loopback()
         || address.is_multicast()
@@ -355,6 +390,50 @@ mod tests {
                 "{address} must not be treated as public"
             );
         }
+    }
+
+    #[test]
+    fn nat64_6to4_and_teredo_carrying_internal_addresses_are_not_global() {
+        // COV-A-F8.
+        for address in [
+            "64:ff9b::7f00:1",                      // NAT64 to 127.0.0.1
+            "64:ff9b::a9fe:a9fe",                   // NAT64 to 169.254.169.254
+            "64:ff9b::c0a8:284",                    // NAT64 to 192.168.2.132
+            "64:ff9b:1::1",                         // local-use NAT64 (RFC 8215)
+            "64:ff9b:1:ffff::8.8.8.8", // local-use NAT64 never public, even to a public v4
+            "2002:7f00:1::",           // 6to4 of 127.0.0.1
+            "2002:a9fe:a9fe::1",       // 6to4 of 169.254.169.254
+            "2002:c0a8:284::1",        // 6to4 of 192.168.2.132
+            "2002:0a00:0001::",        // 6to4 of 10.0.0.1
+            "2001:0:4136:e378:8000:63bf:3fff:fdd2", // Teredo (RFC 4380 example)
+            "2001::1",                 // Teredo prefix, any host
+            "::7f00:1",                // IPv4-compatible loopback
+            "::a9fe:a9fe",             // IPv4-compatible metadata endpoint
+        ] {
+            assert!(
+                !is_global(address.parse().unwrap()),
+                "{address} must not be treated as public"
+            );
+        }
+    }
+
+    #[test]
+    fn nat64_and_6to4_carrying_public_addresses_stay_global() {
+        for address in [
+            "64:ff9b::808:808",     // NAT64 to 8.8.8.8
+            "2002:808:808::1",      // 6to4 of 8.8.8.8
+            "::ffff:8.8.8.8",       // IPv4-mapped, unchanged
+            "2001:4860:4860::8888", // not Teredo: 2001:4860 differs from 2001:0
+        ] {
+            assert!(is_global(address.parse().unwrap()), "{address} is public");
+        }
+    }
+
+    #[test]
+    fn resolving_a_nat64_wrapped_internal_literal_is_refused() {
+        let origin = ("http".to_string(), "64:ff9b::7f00:1".to_string(), 80);
+        let error = resolve_public_addresses(&origin).unwrap_err();
+        assert!(error.contains("refusing non-public address"), "{error}");
     }
 
     #[test]
