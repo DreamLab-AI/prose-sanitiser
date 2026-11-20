@@ -149,7 +149,11 @@ fn payload_findings(units: &[Unit], offsets: &[usize]) -> Vec<Finding> {
             };
             let decoded = match payload.as_text() {
                 Some(text) if !text.is_empty() => format!("{text:?}"),
-                _ => format!("{:?} (not UTF-8)", payload.printable()),
+                // An empty payload is valid UTF-8 by definition: the carriers
+                // that produce one carry presence, not bytes — a stray CANCEL
+                // TAG, or a lone deprecated LANGUAGE TAG.
+                Some(_) => "no bytes".to_string(),
+                None => format!("{:?} (not UTF-8)", payload.printable()),
             };
             Finding {
                 rule_id: rule_id.to_string(),

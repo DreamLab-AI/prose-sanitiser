@@ -139,6 +139,8 @@ pub const ZERO_WIDTH_RUN_THRESHOLD: usize = 8;
 const NOTE_VS: &str =
     "Two or more stacked variation selectors; legitimate use is exactly one per base";
 const NOTE_TAG: &str = "Tag-block characters outside a well-formed RGI subdivision-flag sequence";
+const NOTE_CANCEL: &str =
+    "Stray CANCEL TAG (U+E007F) outside a well-formed RGI subdivision-flag sequence";
 const NOTE_LANGUAGE: &str = "Deprecated LANGUAGE TAG (U+E0001), withdrawn in Unicode 5.1";
 const NOTE_ZW: &str =
     "Zero-width run of eight or more; bit mapping ZWSP/WJ=0, ZWNJ/ZWJ=1 is conventional, not standardised";
@@ -316,7 +318,24 @@ fn read_tag_chain(units: &[Unit], start: usize) -> (usize, Option<Payload>) {
         break;
     }
     if bytes.is_empty() && !language_tag {
-        return (end.max(start + 1), None);
+        // A chain that collected neither tag ASCII nor a LANGUAGE TAG is a
+        // lone CANCEL TAG. Its only legitimate use is terminating an RGI
+        // subdivision-flag sequence, and there the flag's own tag ASCII keeps
+        // it in the non-empty path below: a CANCEL TAG reached on its own is
+        // mechanically contraband per NOTE_TAG, and per
+        // docs/adr/ADR-001-skip-arms-gate-on-owning-alphabet.md this module
+        // owns the tag-character alphabet, so the report must come from here.
+        return (
+            end,
+            Some(Payload {
+                kind: PayloadKind::TagBlock,
+                start,
+                end,
+                base: base_before(units, start),
+                bytes,
+                note: NOTE_CANCEL,
+            }),
+        );
     }
     let base = base_before(units, start);
     let decoded = String::from_utf8_lossy(&bytes).to_string();
