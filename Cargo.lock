@@ -2519,6 +2519,7 @@ dependencies = [
  "prose-sanitiser",
  "prose-sanitiser-core",
  "serde_json",
+ "subtle",
  "tempfile",
  "tokio",
 ]

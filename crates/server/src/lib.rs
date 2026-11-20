@@ -10,6 +10,7 @@
 //! - `GET  /health`       -> `{"ok": true, "version": ...}`
 //! - `GET  /capabilities` -> which optional tools / pixel backends are present
 //! - `GET  /openapi.json` -> the generated OpenAPI 3.0.3 spec
+//! - `GET  /rules`        -> the stylistic rule table: ids, tiers, dates, sources and the ruleset changelog
 //! - `POST /inspect`      -> `{"file": <base64>, "name": "x.png"}` -> findings
 //! - `POST /clean`        -> `{"file": ..., "options": {...}}` -> cleaned bytes
 
@@ -28,6 +29,7 @@ use axum::routing::{get, post};
 use axum::Router;
 use base64::Engine;
 use serde_json::{json, Map, Value};
+use subtle::ConstantTimeEq;
 
 use prose_sanitiser::common::io::max_input_bytes;
 use prose_sanitiser::common::surrogate;
@@ -182,10 +184,14 @@ fn authorised(state: &ServerState, headers: &HeaderMap) -> bool {
     let Some(key) = &state.api_key else {
         return true;
     };
+    let expected = format!("Bearer {key}");
+    // Constant-time comparison (COV-A-F7): `==` on strings stops at the first
+    // differing byte, which leaks how much of a guessed key was right. `subtle`
+    // still returns early when the lengths differ, so the length of the key is
+    // not hidden; its value is.
     headers
         .get("authorization")
-        .and_then(|value| value.to_str().ok())
-        .map(|value| value == format!("Bearer {key}"))
+        .map(|value| bool::from(value.as_bytes().ct_eq(expected.as_bytes())))
         .unwrap_or(false)
 }
 

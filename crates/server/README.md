@@ -15,6 +15,7 @@ workspace, not a library anyone should depend on.
 | `/health` | GET | `{"ok": true, "version": ...}` |
 | `/capabilities` | GET | Which optional tools and pixel backends are present |
 | `/openapi.json` | GET | The generated OpenAPI 3.0.3 spec |
+| `/rules` | GET | The stylistic rule table: ids, tiers, dates, sources and the ruleset changelog |
 | `/inspect` | POST | `{"file": "<base64>", "name": "x.png"}` returns findings |
 | `/clean` | POST | `{"file": ..., "options": {...}}` returns cleaned bytes |
 

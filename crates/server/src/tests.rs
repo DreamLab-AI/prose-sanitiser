@@ -214,3 +214,39 @@ fn the_body_cap_leaves_headroom_for_base64_inflation() {
     // Base64 inflates by 4/3, so the envelope cap must exceed the input cap.
     assert!(max_body_bytes() as u64 > max_input_bytes());
 }
+
+fn bearer(value: &str) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert("authorization", value.parse().unwrap());
+    headers
+}
+
+#[test]
+fn the_bearer_key_is_compared_exactly() {
+    let state = ServerState {
+        api_key: Some("s3cret".to_string()),
+    };
+    assert!(authorised(&state, &bearer("Bearer s3cret")));
+    assert!(!authorised(&state, &bearer("Bearer s3cre")));
+    assert!(!authorised(&state, &bearer("Bearer s3cret ")));
+    assert!(!authorised(&state, &bearer("Bearer s3creT")));
+    assert!(!authorised(&state, &bearer("bearer s3cret")));
+    assert!(!authorised(&state, &bearer("s3cret")));
+    assert!(!authorised(&state, &HeaderMap::new()));
+    // A non-UTF-8 header value is a mismatch, not a panic.
+    let mut odd = HeaderMap::new();
+    odd.insert(
+        "authorization",
+        axum::http::HeaderValue::from_bytes(b"Bearer s3cr\xe9t").unwrap(),
+    );
+    assert!(!authorised(&state, &odd));
+}
+
+#[test]
+fn no_key_configured_means_every_request_is_authorised() {
+    // Documented in crates/server/README.md: an unset key means no auth, so the
+    // service is meant for a loopback bind. Making the key mandatory is a
+    // behaviour change that has not been decided (COV-A-F7).
+    let state = ServerState { api_key: None };
+    assert!(authorised(&state, &HeaderMap::new()));
+}
