@@ -19,20 +19,33 @@ use crate::proc::which;
 use crate::proc::{run_capture, Rlimits, RunError};
 use prose_sanitiser_core::{env_nonempty, py_str_float as format_float};
 
+/// The image path the harness scripts are baked at.
+const BAKED_SCRIPTS_DIR: &str = "/opt/agentbox/skills/prose-sanitiser";
+
 /// Where the Python harness scripts live.
 ///
 /// The Rust binaries sit outside the skill, so the location is configuration
-/// rather than `__file__`: an explicit override first, then the baked image
-/// path, then a repo-relative path for a development checkout.
+/// rather than `__file__`: an explicit `PROSE_SANITISER_SCRIPTS_DIR` first, then
+/// the baked image path. There is no working-directory fallback (COV-A-F5): the
+/// scripts are executed with the harness interpreter, so a `skills/` directory
+/// in whichever directory the tool is run from must never be picked up. A
+/// development checkout sets `PROSE_SANITISER_SCRIPTS_DIR`. When neither exists
+/// the baked path is returned anyway, so the "script not found" error names an
+/// absolute location.
 pub fn scripts_dir() -> PathBuf {
-    if let Some(dir) = env_nonempty("PROSE_SANITISER_SCRIPTS_DIR") {
-        return PathBuf::from(dir);
+    scripts_dir_from(
+        env_nonempty("PROSE_SANITISER_SCRIPTS_DIR"),
+        Path::new(BAKED_SCRIPTS_DIR),
+    )
+}
+
+/// [`scripts_dir`] with the inputs made explicit, so the order is testable
+/// without touching the process environment or the image.
+fn scripts_dir_from(override_dir: Option<String>, baked: &Path) -> PathBuf {
+    match override_dir {
+        Some(dir) => PathBuf::from(dir),
+        None => baked.to_path_buf(),
     }
-    let baked = PathBuf::from("/opt/agentbox/skills/prose-sanitiser");
-    if baked.is_dir() {
-        return baked;
-    }
-    PathBuf::from("skills/prose-sanitiser")
 }
 
 /// The interpreter to run a harness with, when no checkout venv applies.
@@ -421,8 +434,21 @@ mod tests {
     }
 
     #[test]
+    fn the_scripts_dir_never_falls_back_to_the_working_directory() {
+        // COV-A-F5: with no override the answer is the absolute baked path,
+        // whether or not it exists, never `skills/prose-sanitiser`.
+        let baked = Path::new("/nonexistent/baked/prose-sanitiser");
+        assert_eq!(scripts_dir_from(None, baked), baked);
+        assert!(scripts_dir_from(None, Path::new(BAKED_SCRIPTS_DIR)).is_absolute());
+        assert_eq!(
+            scripts_dir_from(Some("/opt/h".to_string()), baked),
+            PathBuf::from("/opt/h")
+        );
+    }
+
+    #[test]
     fn the_scripts_dir_honours_an_explicit_override() {
-        // The override wins over both the baked and repo-relative fallbacks.
+        // The override wins over the baked path.
         std::env::set_var("PROSE_SANITISER_SCRIPTS_DIR", "/tmp/harnesses");
         assert_eq!(scripts_dir(), PathBuf::from("/tmp/harnesses"));
         std::env::remove_var("PROSE_SANITISER_SCRIPTS_DIR");
