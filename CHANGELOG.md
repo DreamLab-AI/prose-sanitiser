@@ -20,8 +20,31 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
   `skills/prose-sanitiser` in the working directory** (COV-A-F5). Set
   `PROSE_SANITISER_SCRIPTS_DIR` for a development checkout.
 
+- **`is_global` also refuses** all of `0.0.0.0/8`, ISATAP identifiers
+  (`::0:5efe:a.b.c.d`, `::200:5efe:a.b.c.d`, under any prefix) whose IPv4 is
+  non-public, the IPv4-translated block `::ffff:0:0:0/96`, site-local
+  `fec0::/10`, documentation `3fff::/20`, and `2001::/23` except the IANA
+  globally reachable sub-allocations.
+- **The server requires `Content-Type: application/json`** on `/inspect` and
+  `/clean` (`415`), and, on a loopback bind with no key, validates `Host`
+  (`421`), closing cross-origin `text/plain` posts and DNS rebinding. The key
+  stays optional. `ServerState` gains `bind`.
+- **A relative `*_DIR` override is ignored** (`PROSE_SANITISER_SCRIPTS_DIR`,
+  `REVERSE_SYNTHID_DIR`, `NOAI_WATERMARK_DIR`, `MARKDIFFUSION_DIR`,
+  `MARKLLM_DIR`): it would resolve against the working directory. Absolute and
+  `~/` values are honoured. `core::env_dir` is the helper.
+
 ### Fixed
 
+- **`slop-detect` surfaces read failures and applies the 32 MiB cap**, as
+  `slop-scan` does: stderr, an `errors` array in `--json`, exit 2.
+  `design::scan_checked`, `try_scan_file` and `walk_checked` report; `scan`,
+  `scan_file` and `walk` stay lossy.
+- **`slop-scan` reports what it skipped.** A `read_dir` entry error is a scan
+  error (exit 2). Symlinked directories (not followed) and non-regular files
+  named `*.md` (never opened) are `ScanResult::notices`, shown on stderr and as
+  a `notices` array in `--json`; they do not change the exit code, because the
+  contract reserves 2 for unreadable input and nothing here was unreadable.
 - **An unreadable file or directory no longer reads as a clean scan**
   (COV-A-F4). `prose::ScanResult` gains `errors`; `prose::try_scan_file` and
   `prose::iter_files_checked` report failures; `slop-scan` prints them on stderr,
