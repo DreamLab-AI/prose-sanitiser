@@ -467,3 +467,104 @@ fn a_readable_scan_reports_no_errors() {
     assert!(result.errors.is_empty());
     assert_eq!(result.files_scanned, 1);
 }
+
+#[cfg(unix)]
+#[test]
+fn a_symlinked_directory_is_not_followed_and_is_reported_as_a_notice() {
+    let dir = tempfile::tempdir().unwrap();
+    let real = dir.path().join("real");
+    std::fs::create_dir(&real).unwrap();
+    std::fs::write(real.join("a.md"), "It rained.\n").unwrap();
+    let scanned = dir.path().join("scanned");
+    std::fs::create_dir(&scanned).unwrap();
+    std::fs::write(scanned.join("b.md"), "It rained.\n").unwrap();
+    std::os::unix::fs::symlink(&real, scanned.join("linked")).unwrap();
+    // A loop back to the root must neither hang nor recurse.
+    std::os::unix::fs::symlink(&scanned, scanned.join("loop")).unwrap();
+
+    let result = scan(&scanned, Severity::Low);
+    assert_eq!(result.files_scanned, 1, "only b.md: links are not followed");
+    assert!(result.errors.is_empty(), "{:?}", result.errors);
+    assert_eq!(result.notices.len(), 2, "{:?}", result.notices);
+    assert!(result
+        .notices
+        .iter()
+        .all(|n| n.message.contains("symlinked directory")));
+    assert!(result.notices.iter().any(|n| n.file.ends_with("linked")));
+    assert!(result.notices.iter().any(|n| n.file.ends_with("loop")));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_symlinked_file_is_still_scanned() {
+    let dir = tempfile::tempdir().unwrap();
+    let target = dir.path().join("target.md");
+    std::fs::write(&target, "It rained.\n").unwrap();
+    let tree = dir.path().join("tree");
+    std::fs::create_dir(&tree).unwrap();
+    std::os::unix::fs::symlink(&target, tree.join("link.md")).unwrap();
+    let result = scan(&tree, Severity::Low);
+    assert_eq!(result.files_scanned, 1);
+    assert!(result.notices.is_empty());
+}
+
+#[cfg(unix)]
+fn make_fifo(path: &Path) {
+    let status = std::process::Command::new("mkfifo")
+        .arg(path)
+        .status()
+        .expect("mkfifo is available");
+    assert!(status.success());
+}
+
+#[cfg(unix)]
+#[test]
+fn a_fifo_named_markdown_is_skipped_with_a_notice_and_never_opened() {
+    let dir = tempfile::tempdir().unwrap();
+    make_fifo(&dir.path().join("pipe.md"));
+    std::fs::write(dir.path().join("fine.md"), "It rained.\n").unwrap();
+    // Opening a FIFO with no writer blocks forever, so a regression hangs this
+    // test rather than failing it; run the scan on a thread with a deadline.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let root = dir.path().to_path_buf();
+    std::thread::spawn(move || {
+        let _ = sender.send(scan(&root, Severity::Low));
+    });
+    let result = receiver
+        .recv_timeout(std::time::Duration::from_secs(10))
+        .expect("the scan must not open the FIFO");
+    assert_eq!(result.files_scanned, 1);
+    assert!(result.errors.is_empty(), "{:?}", result.errors);
+    assert_eq!(result.notices.len(), 1, "{:?}", result.notices);
+    assert!(result.notices[0].file.ends_with("pipe.md"));
+    assert!(result.notices[0].message.contains("not a regular file"));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_fifo_given_directly_is_refused_without_being_opened() {
+    let dir = tempfile::tempdir().unwrap();
+    let fifo = dir.path().join("pipe.md");
+    make_fifo(&fifo);
+    let error = read_file_text(&fifo).unwrap_err();
+    assert!(error.message.contains("not a regular file"), "{error}");
+}
+
+#[cfg(unix)]
+#[test]
+fn an_entry_that_cannot_be_inspected_is_an_error_not_a_silent_skip() {
+    // `read_dir` entries report their own errors; they must reach the result.
+    let mut errors = Vec::new();
+    let entry: std::io::Result<std::fs::DirEntry> =
+        Err(std::io::Error::from_raw_os_error(5 /* EIO */));
+    assert!(entry_or_error(Path::new("/some/dir"), entry, &mut errors).is_none());
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].file, "/some/dir");
+    assert!(errors[0].message.contains("cannot read directory entry"));
+}
+
+#[test]
+fn a_clean_tree_has_no_notices() {
+    let result = scan_text("A short note about hills.\n", Severity::Low);
+    assert!(result.notices.is_empty());
+}

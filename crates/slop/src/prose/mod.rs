@@ -185,6 +185,13 @@ pub(crate) fn read_file_bytes(path: &Path) -> Result<Vec<u8>, ScanError> {
         file: path.display().to_string(),
         message,
     };
+    // Opening a FIFO with no writer blocks forever, so look before opening.
+    // `metadata` follows symlinks, so a link to a regular file is still read.
+    if let Ok(meta) = std::fs::metadata(path) {
+        if !meta.is_file() {
+            return Err(fail("not a regular file, not read".to_string()));
+        }
+    }
     let file = std::fs::File::open(path).map_err(|error| fail(format!("cannot read: {error}")))?;
     let mut raw = Vec::new();
     // One byte past the cap tells "exactly at the cap" from "over it" without
@@ -218,11 +225,55 @@ pub fn iter_files(root: &Path) -> Vec<PathBuf> {
 
 /// [`iter_files`], plus an error for every directory that could not be listed.
 pub fn iter_files_checked(root: &Path) -> (Vec<PathBuf>, Vec<ScanError>) {
+    let walk = iter_files_report(root);
+    (walk.files, walk.errors)
+}
+
+/// What a directory walk found, and what it could not or would not do.
+pub struct FileWalk {
+    /// The files to scan, in a deterministic order.
+    pub files: Vec<PathBuf>,
+    /// Directories or entries that could not be read.
+    pub errors: Vec<ScanError>,
+    /// Entries skipped on purpose: symlinked directories and non-regular files.
+    pub notices: Vec<ScanError>,
+}
+
+/// Unwrap one `read_dir` item, recording its error against `dir` when it failed.
+fn entry_or_error(
+    dir: &Path,
+    entry: std::io::Result<std::fs::DirEntry>,
+    errors: &mut Vec<ScanError>,
+) -> Option<std::fs::DirEntry> {
+    match entry {
+        Ok(entry) => Some(entry),
+        Err(error) => {
+            errors.push(ScanError {
+                file: dir.display().to_string(),
+                message: format!("cannot read directory entry: {error}"),
+            });
+            None
+        }
+    }
+}
+
+/// Walk `root`, reporting read failures as errors and deliberate skips as notices.
+///
+/// Symlinked directories are never followed (so a loop or a link out of the tree
+/// cannot widen the scan) but each is reported. Symlinked files are scanned.
+/// A non-regular file with a scanned extension (a FIFO, socket or device) is
+/// reported and never opened: opening a FIFO with no writer blocks forever.
+pub fn iter_files_report(root: &Path) -> FileWalk {
     if root.is_file() {
-        return (vec![root.to_path_buf()], Vec::new());
+        return FileWalk {
+            files: vec![root.to_path_buf()],
+            errors: Vec::new(),
+            notices: Vec::new(),
+        };
     }
     let mut out = Vec::new();
     let mut errors = Vec::new();
+    let mut notices = Vec::new();
     let mut stack = vec![root.to_path_buf()];
     while let Some(dir) = stack.pop() {
         let entries = match std::fs::read_dir(&dir) {
@@ -237,21 +288,59 @@ pub fn iter_files_checked(root: &Path) -> (Vec<PathBuf>, Vec<ScanError>) {
         };
         let mut dirs = Vec::new();
         let mut files = Vec::new();
-        for entry in entries.flatten() {
+        for entry in entries {
+            let Some(entry) = entry_or_error(&dir, entry, &mut errors) else {
+                continue;
+            };
             let path = entry.path();
             let name = entry.file_name().to_string_lossy().into_owned();
-            if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+            let file_type = match entry.file_type() {
+                Ok(file_type) => file_type,
+                Err(error) => {
+                    errors.push(ScanError {
+                        file: path.display().to_string(),
+                        message: format!("cannot inspect: {error}"),
+                    });
+                    continue;
+                }
+            };
+            let wanted = path
+                .extension()
+                .map(|ext| EXTS.contains(&ext.to_string_lossy().to_lowercase().as_str()))
+                .unwrap_or(false);
+            if file_type.is_dir() {
                 if !SKIP_DIRS.contains(&name.as_str()) {
                     dirs.push(path);
                 }
-            } else {
-                let extension = path
-                    .extension()
-                    .map(|ext| ext.to_string_lossy().to_lowercase())
-                    .unwrap_or_default();
-                if EXTS.contains(&extension.as_str()) {
+            } else if file_type.is_symlink() {
+                // `metadata` follows the link; a dangling link falls through to
+                // the read, which reports it.
+                match std::fs::metadata(&path) {
+                    Ok(meta) if meta.is_dir() => {
+                        if !SKIP_DIRS.contains(&name.as_str()) {
+                            notices.push(ScanError {
+                                file: path.display().to_string(),
+                                message: "symlinked directory not followed".to_string(),
+                            });
+                        }
+                    }
+                    Ok(meta) if !meta.is_file() => {
+                        if wanted {
+                            notices.push(not_regular(&path));
+                        }
+                    }
+                    _ => {
+                        if wanted {
+                            files.push((name, path));
+                        }
+                    }
+                }
+            } else if file_type.is_file() {
+                if wanted {
                     files.push((name, path));
                 }
+            } else if wanted {
+                notices.push(not_regular(&path));
             }
         }
         files.sort_by(|a, b| a.0.cmp(&b.0));
@@ -261,7 +350,18 @@ pub fn iter_files_checked(root: &Path) -> (Vec<PathBuf>, Vec<ScanError>) {
             stack.push(dir);
         }
     }
-    (out, errors)
+    FileWalk {
+        files: out,
+        errors,
+        notices,
+    }
+}
+
+fn not_regular(path: &Path) -> ScanError {
+    ScanError {
+        file: path.display().to_string(),
+        message: "not a regular file, skipped without opening".to_string(),
+    }
 }
 
 fn is_list_line(line: &str) -> bool {
@@ -642,6 +742,14 @@ pub struct ScanResult {
     /// [`MAX_FILE_BYTES`]. Non-empty means the scan is incomplete: a clean result
     /// with errors is not a clean result.
     pub errors: Vec<ScanError>,
+    /// Things the scan deliberately did not do, so a partial tree is visible:
+    /// symlinked directories (never followed, to rule out loops and escapes) and
+    /// non-regular files such as a FIFO or device named `*.md` (never opened).
+    ///
+    /// Not errors: nothing was unreadable, and the exit-code contract reserves
+    /// exit code 2 for input that could not be read. They are reported on stderr and
+    /// in the JSON `notices` key, and leave the exit code alone.
+    pub notices: Vec<ScanError>,
 }
 
 impl ScanResult {
@@ -702,7 +810,8 @@ pub fn scan_with(root: &Path, floor: Severity, structural: bool) -> ScanResult {
     let rules = compile_rules(floor);
     let mut findings = Vec::new();
     let mut measures = Vec::new();
-    let (files, mut errors) = iter_files_checked(root);
+    let walk = iter_files_report(root);
+    let (files, mut errors, notices) = (walk.files, walk.errors, walk.notices);
     let mut scanned = 0;
     for path in &files {
         let text = match read_file_text(path) {
@@ -744,6 +853,7 @@ pub fn scan_with(root: &Path, floor: Severity, structural: bool) -> ScanResult {
         files_scanned: scanned,
         structural: measures,
         errors,
+        notices,
     }
 }
 

@@ -195,6 +195,11 @@ fn body() -> Result<i32, CliError> {
     for error in &result.errors {
         eprintln!("slop-scan: {error}");
     }
+    // Deliberate skips (symlinked directories, non-regular files) are not
+    // failures, so they do not change the exit code, but they must be visible.
+    for notice in &result.notices {
+        eprintln!("slop-scan: skipped: {notice}");
+    }
     let code = if result.errors.is_empty() {
         exit::from_findings(findings.len())
     } else {
@@ -225,6 +230,17 @@ fn body() -> Result<i32, CliError> {
                     .errors
                     .iter()
                     .map(|error| json!({"file": error.file, "message": error.message}))
+                    .collect::<Vec<_>>()),
+            );
+        }
+        // Additive, like `errors`: absent when nothing was skipped on purpose.
+        if !result.notices.is_empty() {
+            payload.insert(
+                "notices".into(),
+                json!(result
+                    .notices
+                    .iter()
+                    .map(|notice| json!({"file": notice.file, "message": notice.message}))
                     .collect::<Vec<_>>()),
             );
         }

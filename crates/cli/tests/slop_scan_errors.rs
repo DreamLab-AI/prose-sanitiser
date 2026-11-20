@@ -41,3 +41,25 @@ fn a_clean_readable_file_still_exits_zero_with_no_errors_key() {
     let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert!(json.get("errors").is_none());
 }
+
+#[cfg(unix)]
+#[test]
+fn a_symlinked_directory_is_reported_as_a_notice_and_does_not_change_the_exit_code() {
+    let dir = tempfile::tempdir().unwrap();
+    let real = dir.path().join("real");
+    std::fs::create_dir(&real).unwrap();
+    std::fs::write(real.join("a.md"), "A short note about hills.\n").unwrap();
+    let tree = dir.path().join("tree");
+    std::fs::create_dir(&tree).unwrap();
+    std::fs::write(tree.join("b.md"), "A short note about hills.\n").unwrap();
+    std::os::unix::fs::symlink(&real, tree.join("linked")).unwrap();
+
+    let output = slop_scan().arg("--json").arg(&tree).output().unwrap();
+    assert_eq!(output.status.code(), Some(0), "{output:?}");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("linked"), "{stderr}");
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(json["files_scanned"], 1);
+    assert_eq!(json["notices"].as_array().unwrap().len(), 1);
+    assert!(json.get("errors").is_none());
+}
