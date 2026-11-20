@@ -48,7 +48,10 @@ fn lone_cancel_after_flag_base_is_a_payload() {
 fn rgi_subdivision_flags_report_nothing() {
     for tag in RGI_SUBDIVISION_TAGS {
         let payloads = scan(&surrogate::decode(flag(tag).as_bytes()));
-        assert!(payloads.is_empty(), "the {tag} subdivision flag must survive");
+        assert!(
+            payloads.is_empty(),
+            "the {tag} subdivision flag must survive"
+        );
     }
 }
 
