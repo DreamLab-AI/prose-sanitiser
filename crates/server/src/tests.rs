@@ -225,6 +225,7 @@ fn bearer(value: &str) -> HeaderMap {
 fn the_bearer_key_is_compared_exactly() {
     let state = ServerState {
         api_key: Some("s3cret".to_string()),
+        ..ServerState::default()
     };
     assert!(authorised(&state, &bearer("Bearer s3cret")));
     assert!(!authorised(&state, &bearer("Bearer s3cre")));
@@ -247,6 +248,233 @@ fn no_key_configured_means_every_request_is_authorised() {
     // Documented in crates/server/README.md: an unset key means no auth, so the
     // service is meant for a loopback bind. Making the key mandatory is a
     // behaviour change that has not been decided (COV-A-F7).
-    let state = ServerState { api_key: None };
+    let state = ServerState::default();
     assert!(authorised(&state, &HeaderMap::new()));
+}
+
+// ---------------------------------------------------------------------------
+// Browser-origin hardening: Content-Type and Host validation.
+// ---------------------------------------------------------------------------
+
+use std::io::{Read, Write};
+use std::net::{SocketAddr, TcpStream};
+
+/// Serve `app` on an ephemeral loopback port on a background thread. `make`
+/// receives the bound address so it can build the state the binary would.
+fn serve(make: impl FnOnce(SocketAddr) -> ServerState + Send + 'static) -> SocketAddr {
+    let (sender, receiver) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        runtime.block_on(async move {
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let addr = listener.local_addr().unwrap();
+            sender.send(addr).unwrap();
+            axum::serve(listener, app(make(addr))).await.unwrap();
+        });
+    });
+    receiver.recv().unwrap()
+}
+
+/// Send one raw HTTP/1.1 request and return `(status, body)`.
+fn send(addr: SocketAddr, head: &[&str], body: &str) -> (u16, String) {
+    let mut request = head.join("\r\n");
+    request.push_str(&format!(
+        "\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    ));
+    let mut stream = TcpStream::connect(addr).unwrap();
+    stream.write_all(request.as_bytes()).unwrap();
+    let mut response = String::new();
+    stream.read_to_string(&mut response).unwrap();
+    let status = response
+        .split_whitespace()
+        .nth(1)
+        .and_then(|code| code.parse().ok())
+        .unwrap_or_else(|| panic!("no status in {response:?}"));
+    let body = response
+        .split_once("\r\n\r\n")
+        .map(|(_, body)| body.to_string())
+        .unwrap_or_default();
+    (status, body)
+}
+
+fn inspect_body() -> String {
+    format!(r#"{{"file": "{}", "name": "a.txt"}}"#, encode(b"hello"))
+}
+
+fn post_inspect(addr: SocketAddr, host: &str, content_type: Option<&str>) -> (u16, String) {
+    let mut head = vec![
+        "POST /inspect HTTP/1.1".to_string(),
+        format!("Host: {host}"),
+    ];
+    if let Some(content_type) = content_type {
+        head.push(format!("Content-Type: {content_type}"));
+    }
+    let head: Vec<&str> = head.iter().map(String::as_str).collect();
+    send(addr, &head, &inspect_body())
+}
+
+#[test]
+fn json_routes_require_a_json_content_type() {
+    let addr = serve(|bound| ServerState {
+        api_key: None,
+        bind: Some(bound),
+    });
+    let host = format!("127.0.0.1:{}", addr.port());
+    // The cross-origin "simple request" content types a page can send without a
+    // preflight, and a missing header.
+    for bad in [
+        Some("text/plain"),
+        Some("text/plain;charset=UTF-8"),
+        Some("application/x-www-form-urlencoded"),
+        Some("multipart/form-data; boundary=x"),
+        Some("application/jsonp"),
+        Some("application/json-seq"),
+        None,
+    ] {
+        let (status, body) = post_inspect(addr, &host, bad);
+        assert_eq!(status, 415, "{bad:?} -> {body}");
+        assert!(body.contains("application/json"), "{body}");
+    }
+    for good in [
+        "application/json",
+        "application/json; charset=utf-8",
+        "Application/JSON",
+        "application/json ;charset=UTF-8",
+    ] {
+        let (status, body) = post_inspect(addr, &host, Some(good));
+        assert_eq!(status, 200, "{good} -> {body}");
+    }
+    // /clean is gated the same way.
+    let head = [
+        "POST /clean HTTP/1.1",
+        &format!("Host: {host}"),
+        "Content-Type: text/plain",
+    ];
+    assert_eq!(send(addr, &head, &inspect_body()).0, 415);
+}
+
+#[test]
+fn a_loopback_bind_refuses_a_foreign_host_header() {
+    let addr = serve(|bound| ServerState {
+        api_key: None,
+        bind: Some(bound),
+    });
+    let port = addr.port();
+    // DNS rebinding: the page's origin is attacker.example, resolving to us.
+    for bad in [
+        "attacker.example".to_string(),
+        format!("attacker.example:{port}"),
+        format!("localhost.attacker.example:{port}"),
+        format!("127.0.0.1.attacker.example:{port}"),
+        format!("127.0.0.1:{}", port.wrapping_add(1)),
+        format!("localhost:{}", port.wrapping_add(1)),
+        "10.0.0.5:80".to_string(),
+        String::new(),
+    ] {
+        let (status, body) = post_inspect(addr, &bad, Some("application/json"));
+        assert_eq!(status, 421, "Host {bad:?} -> {body}");
+        // Reads are refused too: rebinding exists to read the replies.
+        let head = ["GET /capabilities HTTP/1.1", &format!("Host: {bad}")];
+        assert_eq!(send(addr, &head, "").0, 421, "GET with Host {bad:?}");
+    }
+    // No Host header at all (HTTP/1.0 style) is refused.
+    let (status, _) = send(addr, &["GET /health HTTP/1.0"], "");
+    assert_eq!(status, 421);
+}
+
+#[test]
+fn a_loopback_bind_serves_its_own_names() {
+    let addr = serve(|bound| ServerState {
+        api_key: None,
+        bind: Some(bound),
+    });
+    let port = addr.port();
+    for good in [
+        format!("127.0.0.1:{port}"),
+        format!("localhost:{port}"),
+        format!("LOCALHOST:{port}"),
+        format!("localhost.:{port}"),
+        "localhost".to_string(),
+    ] {
+        let (status, body) = post_inspect(addr, &good, Some("application/json"));
+        assert_eq!(status, 200, "Host {good:?} -> {body}");
+        let head = ["GET /health HTTP/1.1", &format!("Host: {good}")];
+        assert_eq!(send(addr, &head, "").0, 200, "GET with Host {good:?}");
+    }
+    // A legitimate request returns the real report.
+    let (status, body) = post_inspect(addr, &format!("localhost:{port}"), Some("application/json"));
+    assert_eq!(status, 200);
+    assert!(body.contains("\"ok\": true"), "{body}");
+}
+
+fn host_header(value: &str) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert("host", value.parse().unwrap());
+    headers
+}
+
+#[test]
+fn host_validation_follows_the_bind_address() {
+    let loopback = |ip: &str| ServerState {
+        api_key: None,
+        bind: Some(format!("{ip}:8765").parse().unwrap()),
+    };
+    // IPv6 loopback bind: its own literal and the loopback names are accepted.
+    let v6 = loopback("[::1]");
+    assert!(host_allowed(&v6, &host_header("[::1]:8765")));
+    assert!(host_allowed(&v6, &host_header("localhost:8765")));
+    assert!(!host_allowed(&v6, &host_header("[::2]:8765")));
+    assert!(!host_allowed(&v6, &host_header("[::1")));
+    assert!(!host_allowed(&v6, &host_header("[::1]:notaport")));
+    // Any 127.0.0.0/8 bind accepts its own literal.
+    let other = loopback("127.0.0.2");
+    assert!(host_allowed(&other, &host_header("127.0.0.2:8765")));
+    assert!(host_allowed(&other, &host_header("127.0.0.1:8765")));
+
+    // A non-loopback bind is a deliberate network deployment: its names are not
+    // knowable here, so the check is off (documented).
+    let lan = ServerState {
+        api_key: None,
+        bind: Some("0.0.0.0:8765".parse().unwrap()),
+    };
+    assert!(host_allowed(&lan, &host_header("whatever.example")));
+    // A bearer key is the control when one is set: a rebound page cannot send it.
+    let keyed = ServerState {
+        api_key: Some("k".into()),
+        bind: Some("127.0.0.1:8765".parse().unwrap()),
+    };
+    assert!(host_allowed(&keyed, &host_header("proxy.example")));
+    // An unknown bind is treated as loopback-only, with any port.
+    let unknown = ServerState::default();
+    assert!(host_allowed(&unknown, &host_header("localhost:1234")));
+    assert!(!host_allowed(&unknown, &host_header("evil.example")));
+}
+
+#[test]
+fn a_keyed_server_still_requires_the_key_and_json() {
+    let addr = serve(|bound| ServerState {
+        api_key: Some("s3cret".into()),
+        bind: Some(bound),
+    });
+    let host = format!("127.0.0.1:{}", addr.port());
+    let (status, _) = post_inspect(addr, &host, Some("application/json"));
+    assert_eq!(status, 401);
+    let head = [
+        "POST /inspect HTTP/1.1",
+        &format!("Host: {host}"),
+        "Content-Type: application/json",
+        "Authorization: Bearer s3cret",
+    ];
+    assert_eq!(send(addr, &head, &inspect_body()).0, 200);
+    let head = [
+        "POST /inspect HTTP/1.1",
+        &format!("Host: {host}"),
+        "Content-Type: text/plain",
+        "Authorization: Bearer s3cret",
+    ];
+    assert_eq!(send(addr, &head, &inspect_body()).0, 415);
 }

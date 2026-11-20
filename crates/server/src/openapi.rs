@@ -21,6 +21,11 @@ fn common_errors() -> Vec<(&'static str, &'static str)> {
         ("401", "Missing/invalid bearer token"),
         ("404", "Not found"),
         ("413", "Request body too large"),
+        ("415", "Content-Type is not application/json"),
+        (
+            "421",
+            "Host header not accepted on an unauthenticated loopback bind",
+        ),
         ("500", "Internal error"),
     ]
 }
@@ -244,7 +249,7 @@ mod tests {
         let spec = openapi_spec(false);
         for (route, method) in [("/health", "get"), ("/inspect", "post"), ("/clean", "post")] {
             let responses = &spec["paths"][route][method]["responses"];
-            for status in ["200", "400", "401", "404", "413", "500"] {
+            for status in ["200", "400", "401", "404", "413", "415", "421", "500"] {
                 assert!(responses.get(status).is_some(), "{route} lacks {status}");
             }
         }

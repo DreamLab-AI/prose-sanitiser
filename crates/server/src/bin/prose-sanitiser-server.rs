@@ -70,6 +70,9 @@ fn body() -> Result<i32, CliError> {
             .map_err(|error| {
                 CliError::new(exit::ERROR, format!("cannot bind {host}:{port}: {error}"))
             })?;
+        // The address actually bound, not the requested name: `localhost` may
+        // resolve to either loopback family, and Host validation keys off it.
+        let bind = listener.local_addr().ok();
         eprint_line(&format!(
             "prose-sanitiser service {} on http://{host}:{port}",
             version()
@@ -78,7 +81,7 @@ fn body() -> Result<i32, CliError> {
             let _ = tokio::signal::ctrl_c().await;
             eprint_line("shutting down");
         };
-        axum::serve(listener, app(ServerState { api_key }))
+        axum::serve(listener, app(ServerState { api_key, bind }))
             .with_graceful_shutdown(shutdown)
             .await
             .map_err(|error| CliError::new(exit::ERROR, format!("server error: {error}")))?;

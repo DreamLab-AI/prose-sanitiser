@@ -16,8 +16,8 @@ workspace, not a library anyone should depend on.
 | `/capabilities` | GET | Which optional tools and pixel backends are present |
 | `/openapi.json` | GET | The generated OpenAPI 3.0.3 spec |
 | `/rules` | GET | The stylistic rule table: ids, tiers, dates, sources and the ruleset changelog |
-| `/inspect` | POST | `{"file": "<base64>", "name": "x.png"}` returns findings |
-| `/clean` | POST | `{"file": ..., "options": {...}}` returns cleaned bytes |
+| `/inspect` | POST | `{"file": "<base64>", "name": "x.png"}` returns findings (`Content-Type: application/json` required) |
+| `/clean` | POST | `{"file": ..., "options": {...}}` returns cleaned bytes (`Content-Type: application/json` required) |
 
 ## Hardening
 
@@ -25,6 +25,24 @@ Mirrors the CLIs: input size caps, the binary-as-text guard, atomic writes, a
 **loopback-only bind by default**, and an optional bearer key
 (`WATERMARKS_SERVER_API_KEY`). Intended for a trusted network. Put it behind a
 reverse proxy if it is reachable from untrusted clients.
+
+### Browser-origin checks
+
+A web page on the same machine can reach a loopback service, so two checks
+apply even with no key set. The key stays optional.
+
+- `POST /inspect` and `POST /clean` require `Content-Type: application/json`
+  (parameters such as `charset` are fine); anything else, or no header, is
+  `415`. A page can send `text/plain` cross-origin without a CORS preflight,
+  and the body would otherwise be parsed as JSON anyway. The service sends no
+  CORS headers.
+- When bound to a loopback address with no key, every route validates the `Host`
+  header against the bound address: `localhost`, `127.0.0.1`, `[::1]` and the
+  bound IP literal, bare or with the bound port. Anything else is `421`. This
+  stops DNS rebinding, where an attacker's hostname resolves to `127.0.0.1` and
+  the page then reads replies as same-origin. The check is off when a key is set
+  (a rebound page cannot present it, and a proxy may forward its own `Host`) and
+  on a non-loopback bind (the names are not knowable from here).
 
 The clean options the service accepts are an explicit allowlist rather than a
 pass-through, so a request cannot reach a flag the service did not intend to
@@ -37,7 +55,7 @@ expose.
 | `WATERMARKS_SERVER_VERSION` | The advertised version. Defaults to `dev` |
 | `WATERMARKS_SERVER_API_KEY` | Bearer token. Unset means no auth, so bind loopback |
 | `WATERMARKS_REWRITE_*` | Rewrite backend, model, base URL, API key, remote allowance |
-| `PROSE_SANITISER_SCRIPTS_DIR` | Where the optional torch harnesses live |
+| `PROSE_SANITISER_SCRIPTS_DIR` | Where the optional torch harnesses live. Absolute (or `~/`) paths only; a relative value is ignored, as is every `*_DIR` override |
 
 API keys are read from the environment only. There is deliberately no flag for
 one, because keys on argv are visible in `ps` and shell history.
