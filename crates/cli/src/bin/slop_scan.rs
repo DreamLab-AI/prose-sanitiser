@@ -189,7 +189,17 @@ fn body() -> Result<i32, CliError> {
         .map(|(severity, count)| severity.weight() * count)
         .sum();
     let verdict = prose_sanitiser::slop::prose::verdict(counts[0].1, weighted);
-    let code = exit::from_findings(findings.len());
+    // An unreadable or oversized file means the scan is incomplete: say so on
+    // stderr and exit with the tool-error code, never as a clean (or merely
+    // short) result (COV-A-F4).
+    for error in &result.errors {
+        eprintln!("slop-scan: {error}");
+    }
+    let code = if result.errors.is_empty() {
+        exit::from_findings(findings.len())
+    } else {
+        exit::ERROR
+    };
 
     if let Some(rendered) = render(&build_report(&findings), format) {
         println!("{rendered}");
@@ -206,6 +216,18 @@ fn body() -> Result<i32, CliError> {
         let mut payload = Map::new();
         payload.insert("path".into(), json!(args.path.display().to_string()));
         payload.insert("files_scanned".into(), json!(result.files_scanned));
+        // Additive: absent when every file was read, so a complete scan's
+        // document is unchanged.
+        if !result.errors.is_empty() {
+            payload.insert(
+                "errors".into(),
+                json!(result
+                    .errors
+                    .iter()
+                    .map(|error| json!({"file": error.file, "message": error.message}))
+                    .collect::<Vec<_>>()),
+            );
+        }
         payload.insert("counts".into(), Value::Object(by_severity));
         payload.insert("slop_score".into(), json!(weighted));
         payload.insert("verdict".into(), json!(verdict));
@@ -250,12 +272,19 @@ fn body() -> Result<i32, CliError> {
         counts[0].1, counts[1].1, counts[2].1
     );
 
+    if findings.is_empty() && !result.errors.is_empty() {
+        println!(
+            "  Scan incomplete: {} file(s) or director(ies) could not be read (see stderr).\n",
+            result.errors.len()
+        );
+        return Ok(code);
+    }
     if findings.is_empty() {
         println!(
             "  Nothing flagged. Either it is clean or the tells are narrative/voice ones a\n  \
              regex cannot see. Read it against Section C of SKILL.md.\n"
         );
-        return Ok(exit::CLEAN);
+        return Ok(code);
     }
 
     for (_, items) in &groups {

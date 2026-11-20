@@ -387,3 +387,83 @@ fn one_phrase_fires_one_rule_for_the_to_put_it_family() {
     assert!(ids.contains(&"claudish-structure".to_string()));
     assert!(!ids.contains(&"preamble-label".to_string()));
 }
+
+#[test]
+fn a_missing_file_is_an_error_not_a_clean_scan() {
+    // COV-A-F4: an unreadable file used to return no findings.
+    let dir = tempfile::tempdir().unwrap();
+    let missing = dir.path().join("gone.md");
+    let rules = compile_rules(Severity::Low);
+    let error = try_scan_file(&missing, &rules, Severity::Low).unwrap_err();
+    assert!(error.file.ends_with("gone.md"), "{error}");
+    assert!(error.message.contains("cannot read"), "{error}");
+    assert!(scan_file(&missing, &rules, Severity::Low).is_empty());
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_file_in_a_tree_is_reported_and_not_counted_as_scanned() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let locked = dir.path().join("locked.md");
+    std::fs::write(&locked, "We leverage a robust approach.\n").unwrap();
+    std::fs::write(dir.path().join("fine.md"), "It rained.\n").unwrap();
+    std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+    if std::fs::File::open(&locked).is_ok() {
+        // Running as root: permissions do not bite, so there is nothing to test.
+        return;
+    }
+    let result = scan(dir.path(), Severity::Low);
+    assert_eq!(result.files_scanned, 1);
+    assert_eq!(result.errors.len(), 1, "{:?}", result.errors);
+    assert!(result.errors[0].file.ends_with("locked.md"));
+    assert!(result.findings.is_empty());
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unlistable_directory_is_reported() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let sub = dir.path().join("sub");
+    std::fs::create_dir(&sub).unwrap();
+    std::fs::write(sub.join("a.md"), "It rained.\n").unwrap();
+    std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o000)).unwrap();
+    if std::fs::read_dir(&sub).is_ok() {
+        std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o755)).unwrap();
+        return;
+    }
+    let result = scan(dir.path(), Severity::Low);
+    std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert_eq!(result.errors.len(), 1, "{:?}", result.errors);
+    assert!(result.errors[0].message.contains("cannot list directory"));
+}
+
+#[test]
+fn a_file_over_the_size_cap_is_an_error_not_read() {
+    // COV-A-F3: the scanner reads files, so it bounds them.
+    let dir = tempfile::tempdir().unwrap();
+    let big = dir.path().join("big.md");
+    let file = std::fs::File::create(&big).unwrap();
+    file.set_len(MAX_FILE_BYTES + 1).unwrap();
+    let error = read_file_text(&big).unwrap_err();
+    assert!(error.message.contains("scan limit"), "{error}");
+    let result = scan(&big, Severity::Low);
+    assert_eq!(result.files_scanned, 0);
+    assert_eq!(result.errors.len(), 1);
+
+    // Exactly at the cap is read.
+    let edge = dir.path().join("edge.md");
+    std::fs::File::create(&edge)
+        .unwrap()
+        .set_len(MAX_FILE_BYTES)
+        .unwrap();
+    assert!(read_file_text(&edge).is_ok());
+}
+
+#[test]
+fn a_readable_scan_reports_no_errors() {
+    let result = scan_text("A short note about hills.\n", Severity::Low);
+    assert!(result.errors.is_empty());
+    assert_eq!(result.files_scanned, 1);
+}
