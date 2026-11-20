@@ -33,7 +33,7 @@ use subtle::ConstantTimeEq;
 
 use prose_sanitiser::common::io::max_input_bytes;
 use prose_sanitiser::common::surrogate;
-use prose_sanitiser::common::{env_nonempty, looks_binary, to_pretty_json, which};
+use prose_sanitiser::common::{env_dir, env_nonempty, looks_binary, to_pretty_json, which};
 use prose_sanitiser::container::{clean_container, inspect_container};
 use prose_sanitiser::dispatch::{classify_bytes, Kind};
 use prose_sanitiser::image::{clean_image, inspect_image, CleanImageOptions, PixelRemover};
@@ -152,11 +152,11 @@ pub fn capabilities() -> Value {
             "qpdf": which("qpdf").is_some(),
         },
         "pixel_backends": {
-            "ctrlregen": env_nonempty("NOAI_WATERMARK_DIR").is_some(),
-            "diffusion": env_nonempty("MARKDIFFUSION_DIR").is_some(),
+            "ctrlregen": env_dir("NOAI_WATERMARK_DIR").is_some(),
+            "diffusion": env_dir("MARKDIFFUSION_DIR").is_some(),
         },
-        "scorers": {"synthid": env_nonempty("REVERSE_SYNTHID_DIR").is_some()},
-        "harnesses": {"markllm": env_nonempty("MARKLLM_DIR").is_some()},
+        "scorers": {"synthid": env_dir("REVERSE_SYNTHID_DIR").is_some()},
+        "harnesses": {"markllm": env_dir("MARKLLM_DIR").is_some()},
         "ruleset": ruleset(),
     })
 }

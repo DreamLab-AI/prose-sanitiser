@@ -11,8 +11,8 @@ use std::path::Path;
 use clap::Parser;
 use prose_sanitiser::common::surrogate;
 use prose_sanitiser::common::{
-    cleaned_path, env_flag, env_nonempty, eprint_line, read_text_input, run_cli, to_pretty_json,
-    write_text_output, CliError,
+    cleaned_path, env_dir, env_flag, env_nonempty, eprint_line, read_text_input, run_cli,
+    to_pretty_json, write_text_output, CliError,
 };
 use prose_sanitiser::exit;
 use prose_sanitiser::rewrite::{
@@ -133,10 +133,7 @@ fn body() -> Result<i32, CliError> {
         reasoning_effort: (reasoning != "off").then_some(reasoning),
         markllm: args.markllm_scheme.clone().map(|scheme| MarkllmOptions {
             scheme,
-            upstream_dir: args
-                .markllm_dir
-                .clone()
-                .or_else(|| env_nonempty("MARKLLM_DIR")),
+            upstream_dir: args.markllm_dir.clone().or_else(|| env_dir("MARKLLM_DIR")),
             model: args
                 .markllm_model
                 .clone()

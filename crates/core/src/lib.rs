@@ -134,6 +134,22 @@ pub fn env_nonempty(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|value| !value.is_empty())
 }
 
+/// Read a directory override from the environment, ignoring a relative value.
+///
+/// A relative path would resolve against whichever directory the tool happens to
+/// be run from, so a hostile working directory could steer a `*_DIR` override at
+/// code it controls. Only an absolute path, or one beginning `~/` (which expands
+/// against `$HOME`, not the working directory), is honoured; anything else, like
+/// an empty value, reads as unset.
+pub fn env_dir(name: &str) -> Option<String> {
+    env_nonempty(name).filter(|value| is_stable_dir_path(value))
+}
+
+/// Whether `value` names a directory independently of the working directory.
+pub fn is_stable_dir_path(value: &str) -> bool {
+    std::path::Path::new(value).is_absolute() || value.starts_with("~/")
+}
+
 /// Truthiness for the flag-shaped environment variables.
 pub fn env_flag(name: &str) -> bool {
     matches!(
@@ -190,6 +206,30 @@ pub fn to_pretty_json_ascii(value: &serde_json::Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_absolute_or_home_relative_dir_overrides_are_honoured() {
+        assert!(is_stable_dir_path("/opt/harnesses"));
+        assert!(is_stable_dir_path("~/checkouts/markllm"));
+        for relative in [
+            "skills/prose-sanitiser",
+            "./scripts",
+            "../scripts",
+            ".",
+            "~",
+            "~x",
+        ] {
+            assert!(!is_stable_dir_path(relative), "{relative} is cwd-relative");
+        }
+        std::env::set_var("PROSE_SANITISER_TEST_DIR_REL", "skills/x");
+        assert!(env_dir("PROSE_SANITISER_TEST_DIR_REL").is_none());
+        std::env::set_var("PROSE_SANITISER_TEST_DIR_ABS", "/opt/x");
+        assert_eq!(
+            env_dir("PROSE_SANITISER_TEST_DIR_ABS").as_deref(),
+            Some("/opt/x")
+        );
+        assert!(env_dir("PROSE_SANITISER_TEST_DIR_UNSET").is_none());
+    }
 
     #[test]
     fn env_helpers_fall_back_safely() {
