@@ -13,6 +13,7 @@ use std::sync::OnceLock;
 use regex::Regex;
 use serde_json::{json, Value};
 
+use crate::prose::{read_file_bytes, ScanError};
 use rules::LINE_RULES;
 use whole_file::file_rules;
 
@@ -238,12 +239,18 @@ impl RuleFilter {
     }
 }
 
-/// Scan one file.
+/// Scan one file, treating an unreadable or oversized file as having no findings.
+///
+/// That cannot be told from a clean file. Prefer [`try_scan_file`], which
+/// reports the failure.
 pub fn scan_file(path: &Path, filter: &RuleFilter) -> Vec<Finding> {
-    let Ok(raw) = std::fs::read(path) else {
-        return Vec::new();
-    };
-    // Python read with errors="replace".
+    try_scan_file(path, filter).unwrap_or_default()
+}
+
+/// Scan one file, reporting a read failure (including a file over
+/// [`crate::prose::MAX_FILE_BYTES`]) as an error instead of an empty result.
+pub fn try_scan_file(path: &Path, filter: &RuleFilter) -> Result<Vec<Finding>, ScanError> {
+    let raw = read_file_bytes(path)?;
     let text = String::from_utf8_lossy(&raw).into_owned();
     let lines: Vec<&str> = text.split('\n').collect();
     let map = disabled_map(&lines);
@@ -274,7 +281,7 @@ pub fn scan_file(path: &Path, filter: &RuleFilter) -> Vec<Finding> {
         findings.push(Finding::new(rule, severity, line, &file, &snippet, message));
     }
 
-    findings
+    Ok(findings)
 }
 
 /// Expand the given paths into scannable files, in a deterministic order.
@@ -291,7 +298,14 @@ pub fn scan_file(path: &Path, filter: &RuleFilter) -> Vec<Finding> {
 /// because this runs as a CI gate and its output gets diffed. Per-file
 /// behaviour, counts, severities and exit codes are unchanged.
 pub fn walk(paths: &[PathBuf]) -> Vec<PathBuf> {
+    walk_checked(paths).0
+}
+
+/// [`walk`], plus an error for every directory or directory entry that could
+/// not be read, so an incomplete walk is visible.
+pub fn walk_checked(paths: &[PathBuf]) -> (Vec<PathBuf>, Vec<ScanError>) {
     let mut out = Vec::new();
+    let mut errors = Vec::new();
     for root in paths {
         if root.is_file() {
             out.push(root.clone());
@@ -302,12 +316,29 @@ pub fn walk(paths: &[PathBuf]) -> Vec<PathBuf> {
         }
         let mut stack = vec![root.clone()];
         while let Some(dir) = stack.pop() {
-            let Ok(entries) = std::fs::read_dir(&dir) else {
-                continue;
+            let entries = match std::fs::read_dir(&dir) {
+                Ok(entries) => entries,
+                Err(error) => {
+                    errors.push(ScanError {
+                        file: dir.display().to_string(),
+                        message: format!("cannot list directory: {error}"),
+                    });
+                    continue;
+                }
             };
             let mut dirs = Vec::new();
             let mut files = Vec::new();
-            for entry in entries.flatten() {
+            for entry in entries {
+                let entry = match entry {
+                    Ok(entry) => entry,
+                    Err(error) => {
+                        errors.push(ScanError {
+                            file: dir.display().to_string(),
+                            message: format!("cannot read directory entry: {error}"),
+                        });
+                        continue;
+                    }
+                };
                 let path = entry.path();
                 let name = entry.file_name().to_string_lossy().into_owned();
                 if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
@@ -332,16 +363,39 @@ pub fn walk(paths: &[PathBuf]) -> Vec<PathBuf> {
             }
         }
     }
-    out
+    (out, errors)
 }
 
 /// Scan every file under `paths`, keeping findings at or above `floor`.
+///
+/// Files that cannot be read are skipped silently; use [`scan_checked`] to learn
+/// which.
 pub fn scan(paths: &[PathBuf], filter: &RuleFilter, floor: Severity) -> Vec<Finding> {
-    walk(paths)
-        .iter()
-        .flat_map(|path| scan_file(path, filter))
-        .filter(|finding| finding.severity >= floor)
-        .collect()
+    scan_checked(paths, filter, floor).findings
+}
+
+/// A completed design scan.
+#[derive(Debug)]
+pub struct DesignScan {
+    /// Findings at or above the floor, in walk order.
+    pub findings: Vec<Finding>,
+    /// Files or directories that could not be read, or were over
+    /// [`crate::prose::MAX_FILE_BYTES`]. Non-empty means the scan is
+    /// incomplete: a clean result with errors is not a clean result.
+    pub errors: Vec<ScanError>,
+}
+
+/// [`scan`], reporting every read failure instead of swallowing it.
+pub fn scan_checked(paths: &[PathBuf], filter: &RuleFilter, floor: Severity) -> DesignScan {
+    let (files, mut errors) = walk_checked(paths);
+    let mut findings = Vec::new();
+    for path in &files {
+        match try_scan_file(path, filter) {
+            Ok(found) => findings.extend(found.into_iter().filter(|f| f.severity >= floor)),
+            Err(error) => errors.push(error),
+        }
+    }
+    DesignScan { findings, errors }
 }
 
 /// Findings grouped by rule, in first-seen (scan) order.

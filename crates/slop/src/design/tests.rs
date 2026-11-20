@@ -316,3 +316,78 @@ fn severity_parses_and_orders() {
     assert!(Severity::Info < Severity::Warn);
     assert!(Severity::Warn < Severity::Error);
 }
+
+#[test]
+fn a_missing_file_is_an_error_not_a_clean_scan() {
+    let dir = tempfile::tempdir().unwrap();
+    let missing = dir.path().join("gone.css");
+    let error = try_scan_file(&missing, &RuleFilter::default()).unwrap_err();
+    assert!(error.file.ends_with("gone.css"), "{error}");
+    assert!(error.message.contains("cannot read"), "{error}");
+    // The infallible wrapper keeps its documented empty result.
+    assert!(scan_file(&missing, &RuleFilter::default()).is_empty());
+}
+
+#[test]
+fn a_file_over_the_size_cap_is_an_error_not_read() {
+    let dir = tempfile::tempdir().unwrap();
+    let big = dir.path().join("big.css");
+    std::fs::File::create(&big)
+        .unwrap()
+        .set_len(crate::prose::MAX_FILE_BYTES + 1)
+        .unwrap();
+    let error = try_scan_file(&big, &RuleFilter::default()).unwrap_err();
+    assert!(error.message.contains("scan limit"), "{error}");
+    let result = scan_checked(&[big], &RuleFilter::default(), Severity::Info);
+    assert_eq!(result.errors.len(), 1, "{:?}", result.errors);
+    assert!(result.findings.is_empty());
+
+    // Exactly at the cap is read.
+    let edge = dir.path().join("edge.css");
+    std::fs::File::create(&edge)
+        .unwrap()
+        .set_len(crate::prose::MAX_FILE_BYTES)
+        .unwrap();
+    assert!(try_scan_file(&edge, &RuleFilter::default()).is_ok());
+}
+
+#[cfg(unix)]
+#[test]
+fn unreadable_files_and_directories_in_a_tree_are_reported() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let locked = dir.path().join("locked.css");
+    std::fs::write(&locked, "a { color: red }\n").unwrap();
+    let sub = dir.path().join("sub");
+    std::fs::create_dir(&sub).unwrap();
+    std::fs::write(sub.join("a.css"), "a { color: red }\n").unwrap();
+    std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+    std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o000)).unwrap();
+    let skip = std::fs::File::open(&locked).is_ok() || std::fs::read_dir(&sub).is_ok();
+    let result = scan_checked(
+        &[dir.path().to_path_buf()],
+        &RuleFilter::default(),
+        Severity::Info,
+    );
+    std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o755)).unwrap();
+    if skip {
+        // Running as root: permissions do not bite, so there is nothing to test.
+        return;
+    }
+    let messages: Vec<&str> = result.errors.iter().map(|e| e.message.as_str()).collect();
+    assert_eq!(result.errors.len(), 2, "{messages:?}");
+    assert!(messages.iter().any(|m| m.contains("cannot list directory")));
+    assert!(result.errors.iter().any(|e| e.file.ends_with("locked.css")));
+}
+
+#[test]
+fn a_readable_tree_reports_no_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("a.css"), "a { color: red }\n").unwrap();
+    let result = scan_checked(
+        &[dir.path().to_path_buf()],
+        &RuleFilter::default(),
+        Severity::Info,
+    );
+    assert!(result.errors.is_empty());
+}

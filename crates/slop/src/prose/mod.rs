@@ -175,10 +175,11 @@ impl std::fmt::Display for ScanError {
 
 impl std::error::Error for ScanError {}
 
-/// Read one file as text, bounded by [`MAX_FILE_BYTES`].
+/// Read one file's bytes, bounded by [`MAX_FILE_BYTES`].
 ///
-/// Undecodable bytes are dropped, as Python's `errors="ignore"` did.
-pub fn read_file_text(path: &Path) -> Result<String, ScanError> {
+/// Shared with the design scanner so both apply the same cap and report a read
+/// failure the same way.
+pub(crate) fn read_file_bytes(path: &Path) -> Result<Vec<u8>, ScanError> {
     use std::io::Read;
     let fail = |message: String| ScanError {
         file: path.display().to_string(),
@@ -197,7 +198,14 @@ pub fn read_file_text(path: &Path) -> Result<String, ScanError> {
             MAX_FILE_BYTES / (1024 * 1024)
         )));
     }
-    Ok(prose_sanitiser_core::surrogate::decode_ignore(&raw))
+    Ok(raw)
+}
+
+/// Read one file as text, bounded by [`MAX_FILE_BYTES`].
+///
+/// Undecodable bytes are dropped, as Python's `errors="ignore"` did.
+pub fn read_file_text(path: &Path) -> Result<String, ScanError> {
+    read_file_bytes(path).map(|raw| prose_sanitiser_core::surrogate::decode_ignore(&raw))
 }
 
 /// Files the scanner reads: a single file, or every matching file in a tree.
