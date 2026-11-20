@@ -154,6 +154,8 @@ pub fn is_global(address: IpAddr) -> bool {
 fn is_global_v4(address: Ipv4Addr) -> bool {
     let octets = address.octets();
     !(address.is_unspecified()
+        // 0.0.0.0/8 "this network" (RFC 1122), not just 0.0.0.0.
+        || octets[0] == 0
         || address.is_loopback()
         || address.is_private()
         || address.is_link_local()
@@ -176,6 +178,24 @@ fn embedded_v4(address: Ipv6Addr) -> Ipv4Addr {
     Ipv4Addr::new(octets[12], octets[13], octets[14], octets[15])
 }
 
+/// Globally reachable sub-allocations of 2001::/23, per the IANA IPv6
+/// special-purpose registry (the same exceptions Python's `is_global` carves
+/// out): PCP, TURN and DNS-SD SRP anycast, AMT, AS112-v6, ORCHIDv2 and Drone
+/// Remote ID. Everything else in the block is refused.
+fn is_global_ietf_assignment(segments: [u16; 8]) -> bool {
+    match segments[1] {
+        // 2001:1::1/128, 2001:1::2/128, 2001:1::3/128 anycast.
+        0x0001 => segments[2..7].iter().all(|s| *s == 0) && matches!(segments[7], 1..=3),
+        // 2001:3::/32 AMT.
+        0x0003 => true,
+        // 2001:4:112::/48 AS112-v6.
+        0x0004 => segments[2] == 0x0112,
+        // 2001:20::/28 ORCHIDv2 and 2001:30::/28 Drone Remote ID.
+        0x0020..=0x002F | 0x0030..=0x003F => true,
+        _ => false,
+    }
+}
+
 fn is_global_v6(address: Ipv6Addr) -> bool {
     let segments = address.segments();
     // Transition ranges that carry an IPv4 address (COV-A-F8). Without these an
@@ -196,10 +216,31 @@ fn is_global_v6(address: Ipv6Addr) -> bool {
         let octets = address.octets();
         return is_global_v4(Ipv4Addr::new(octets[2], octets[3], octets[4], octets[5]));
     }
-    // 2001::/32 Teredo (RFC 4380): tunnels to arbitrary IPv4 hosts and is
-    // deprecated; refused outright rather than unpacking the server and the
-    // obfuscated client address.
-    if segments[0] == 0x2001 && segments[1] == 0x0000 {
+    // 2001::/23 IETF protocol assignments (IANA special-purpose registry). Not
+    // globally reachable by default, so refused outright. This covers 2001::/32
+    // Teredo (RFC 4380; tunnels to arbitrary IPv4 hosts, so it is refused rather
+    // than unpacking the server and obfuscated client address), 2001:2::/48
+    // benchmarking and 2001:10::/28 ORCHIDv1. The registry's globally reachable
+    // sub-allocations are carved back out.
+    if segments[0] == 0x2001 && segments[1] < 0x0200 {
+        return is_global_ietf_assignment(segments);
+    }
+    // 3fff::/20 documentation (RFC 9637).
+    if segments[0] == 0x3FFF && (segments[1] & 0xF000) == 0 {
+        return false;
+    }
+    // ::ffff:0:0:0/96 IPv4-translated (RFC 2765 SIIT, deprecated). Distinct from
+    // the IPv4-mapped ::ffff:0:0/96, which `is_global` unwraps before this point.
+    if segments[..4].iter().all(|s| *s == 0) && segments[4] == 0xFFFF && segments[5] == 0 {
+        return false;
+    }
+    // ISATAP interface identifiers (RFC 5214) under any prefix: the low 32 bits
+    // are an IPv4 address the tunnel delivers to, so it must itself be public.
+    // A public embedded address does not make the prefix public, so fall through.
+    if (segments[4] == 0x0000 || segments[4] == 0x0200)
+        && segments[5] == 0x5EFE
+        && !is_global_v4(embedded_v4(address))
+    {
         return false;
     }
     // ::a.b.c.d IPv4-compatible (RFC 4291, deprecated): same embedded-address rule.
@@ -214,6 +255,8 @@ fn is_global_v6(address: Ipv6Addr) -> bool {
         || (segments[0] & 0xFE00) == 0xFC00
         // fe80::/10 link local.
         || (segments[0] & 0xFFC0) == 0xFE80
+        // fec0::/10 deprecated site-local (RFC 3879).
+        || (segments[0] & 0xFFC0) == 0xFEC0
         // 2001:db8::/32 documentation.
         || (segments[0] == 0x2001 && segments[1] == 0x0DB8)
         // 100::/64 discard-only.
@@ -427,6 +470,113 @@ mod tests {
         ] {
             assert!(is_global(address.parse().unwrap()), "{address} is public");
         }
+    }
+
+    fn assert_refused(addresses: &[&str]) {
+        for address in addresses {
+            assert!(
+                !is_global(address.parse().unwrap()),
+                "{address} must not be treated as public"
+            );
+        }
+    }
+
+    fn assert_public(addresses: &[&str]) {
+        for address in addresses {
+            assert!(is_global(address.parse().unwrap()), "{address} is public");
+        }
+    }
+
+    #[test]
+    fn all_of_zero_slash_eight_is_refused() {
+        // 0.0.0.0/8 "this network" (RFC 1122), reached through every embedded path.
+        assert_refused(&[
+            "0.0.0.2",
+            "0.1.2.3",
+            "0.255.255.255",
+            "::0.0.0.2",         // IPv4-compatible
+            "64:ff9b::2",        // NAT64 to 0.0.0.2
+            "2002:0000:0002::1", // 6to4 of 0.0.0.2
+            "::ffff:0.0.0.2",    // IPv4-mapped
+        ]);
+        assert_public(&["1.0.0.1", "::ffff:1.0.0.1"]);
+    }
+
+    #[test]
+    fn isatap_identifiers_with_non_public_embedded_v4_are_refused() {
+        assert_refused(&[
+            "2606:4700::5efe:7f00:1",     // ISATAP 127.0.0.1
+            "2606:4700::200:5efe:7f00:1", // ISATAP, universal bit set
+            "::0:5efe:10.0.0.1",
+            "::200:5efe:192.168.2.132",
+            "2606:4700:1:2:0:5efe:169.254.169.254",
+        ]);
+        // The prefix is still judged on its own when the embedded IPv4 is public.
+        assert_refused(&["fc00::5efe:808:808", "fe80::200:5efe:808:808"]);
+        // Public embedded IPv4, and near-miss identifiers, stay allowed.
+        assert_public(&[
+            "2606:4700::5efe:808:808",
+            "2606:4700::200:5efe:808:808",
+            "2606:4700::5efd:7f00:1",
+            "2606:4700::1:5efe:7f00:1",
+        ]);
+    }
+
+    #[test]
+    fn ipv4_translated_block_is_refused() {
+        // ::ffff:0:0:0/96 (RFC 2765 SIIT), distinct from IPv4-mapped ::ffff:0:0/96.
+        assert_refused(&[
+            "::ffff:0:7f00:1",
+            "::ffff:0:a00:1",
+            "::ffff:0:808:808",
+            "0:0:0:0:ffff:0:c0a8:284",
+        ]);
+        // IPv4-mapped handling is unchanged, and neighbours are not caught.
+        assert_public(&["::ffff:8.8.8.8", "2606:4700::ffff:0:808:808"]);
+        assert_refused(&["::ffff:127.0.0.1"]);
+    }
+
+    #[test]
+    fn deprecated_site_local_is_refused() {
+        assert_refused(&["fec0::1", "feff:ffff::1", "fec0:0:0:1::5"]);
+        // fe80::/10 (link-local) is a separate, already-refused /10.
+        assert_refused(&["fe80::1"]);
+        assert_public(&["2606:4700::1", "fe7f::1"]);
+    }
+
+    #[test]
+    fn documentation_3fff_slash_20_is_refused() {
+        assert_refused(&[
+            "3fff::",
+            "3fff:0:1::1",
+            "3fff:fff:ffff:ffff:ffff:ffff:ffff:ffff",
+        ]);
+        assert_public(&["3fff:1000::1", "3ffe::1", "2606:4700::1"]);
+    }
+
+    #[test]
+    fn ietf_protocol_block_remainder_is_refused() {
+        assert_refused(&[
+            "2001:2::1",     // benchmarking 2001:2::/48
+            "2001:10::1",    // ORCHIDv1
+            "2001:1::4",     // inside 2001:1::/32 but not an anycast exception
+            "2001:1ff::1",   // top of 2001::/23
+            "2001:0:0:1::1", // Teredo prefix
+            "2001:2:1::1",   // outside 2001:2::/48 but still inside 2001::/23
+        ]);
+        // Registered globally reachable sub-allocations stay allowed.
+        assert_public(&[
+            "2001:1::1",     // PCP anycast
+            "2001:1::2",     // TURN anycast
+            "2001:1::3",     // DNS-SD SRP anycast
+            "2001:3::1",     // AMT
+            "2001:4:112::1", // AS112-v6
+            "2001:20::1",    // ORCHIDv2
+            "2001:30::1",    // Drone Remote ID
+        ]);
+        // Just outside 2001::/23, and documentation 2001:db8::/32 stays refused.
+        assert_public(&["2001:200::1", "2001:4860:4860::8888"]);
+        assert_refused(&["2001:db8::1"]);
     }
 
     #[test]
