@@ -42,7 +42,7 @@ Nothing here hand-parses a format that a maintained crate already covers.
 | PDF object graph, full rewrite on save | [`lopdf`](https://github.com/J-F-Liu/lopdf) 0.44 | MIT |
 | OOXML and ODF zip containers | [`zip`](https://lib.rs/crates/zip) | MIT |
 | WordprocessingML, `[Content_Types]`, `_rels` | [`quick-xml`](https://docs.rs/quick-xml) 0.41 | MIT |
-| C2PA manifests, **read and validate only** | [`c2pa`](https://docs.rs/c2pa) 0.90 | MIT OR Apache-2.0 |
+| C2PA manifests, **read and validate only** | [`c2pa`](https://docs.rs/c2pa) 0.91 | MIT OR Apache-2.0 |
 
 GPL and AGPL alternatives are deliberately excluded: no `rexiv2` (GPL-3.0), no
 `mupdf-rs` (AGPL-3.0).

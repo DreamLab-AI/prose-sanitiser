@@ -19,7 +19,7 @@
 //! | PDF object graph, with a full rewrite on save | [`lopdf`] 0.44 | MIT |
 //! | OOXML and ODF zip containers | [`zip`] | MIT |
 //! | WordprocessingML, `[Content_Types]`, `_rels` | [`quick_xml`] | MIT |
-//! | C2PA manifest **read and validate only** | [`c2pa`] 0.90 (feature `c2pa-read`) | MIT OR Apache-2.0 |
+//! | C2PA manifest **read and validate only** | [`c2pa`] 0.91 (feature `c2pa-read`) | MIT OR Apache-2.0 |
 //!
 //! `exiftool`, `c2patool` and `qpdf` are no longer on the implementation path.
 //! They survive only as an advisory cross-check behind the non-default
