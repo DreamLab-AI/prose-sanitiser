@@ -7,6 +7,31 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+### Security
+
+- **Every server route compares the bearer key in
+  constant time** (`subtle::ConstantTimeEq`) instead of `==` (COV-A-F7). The key
+  stays optional, as documented: unset means no auth, for a loopback bind.
+- **`is_global` refuses NAT64, 6to4, Teredo and IPv4-compatible addresses that
+  carry a non-public IPv4 address** (COV-A-F8). `64:ff9b::/96` and `2002::/16`
+  are public only when the embedded IPv4 is; `64:ff9b:1::/48` and `2001::/32`
+  are refused outright. IPv4-mapped handling is unchanged.
+- **The harness scripts directory no longer falls back to
+  `skills/prose-sanitiser` in the working directory** (COV-A-F5). Set
+  `PROSE_SANITISER_SCRIPTS_DIR` for a development checkout.
+
+### Fixed
+
+- **An unreadable file or directory no longer reads as a clean scan**
+  (COV-A-F4). `prose::ScanResult` gains `errors`; `prose::try_scan_file` and
+  `prose::iter_files_checked` report failures; `slop-scan` prints them on stderr,
+  adds an `errors` array to `--json`, and exits 2. A file over
+  `prose::MAX_FILE_BYTES` (32 MiB) is an error, not read (COV-A-F3).
+  `scan_file` and `iter_files` keep their signatures and are lossy; prefer the
+  checked forms. `ScanResult.files_scanned` now counts files actually read.
+- **Docs**: the server module lists `GET /rules`; the media crate says c2pa 0.91
+  (COV-A-F10).
+
 ## [0.1.6] - 2026-11-11
 
 ### Security
