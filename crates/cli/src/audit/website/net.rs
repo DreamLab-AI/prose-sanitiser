@@ -191,7 +191,7 @@ fn is_global_ietf_assignment(segments: [u16; 8]) -> bool {
         // 2001:4:112::/48 AS112-v6.
         0x0004 => segments[2] == 0x0112,
         // 2001:20::/28 ORCHIDv2 and 2001:30::/28 Drone Remote ID.
-        0x0020..=0x002F | 0x0030..=0x003F => true,
+        0x0020..=0x003F => true,
         _ => false,
     }
 }
