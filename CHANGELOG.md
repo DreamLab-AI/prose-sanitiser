@@ -7,6 +7,8 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-11-21
+
 ### Security
 
 - **Every server route compares the bearer key in
