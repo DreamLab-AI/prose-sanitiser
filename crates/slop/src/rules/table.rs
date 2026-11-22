@@ -15,7 +15,7 @@ use super::{uk, Rule, Severity};
 /// When the table was first written, ported from the Python skill.
 const V1: &str = "2026-01-14";
 /// When the tables were last checked against their sources in full.
-const REVIEWED: &str = "2026-11-11";
+const REVIEWED: &str = "2026-11-21";
 
 /// Report only: no lexical marker is ever safe to act on unread.
 const JUDGEMENT: ConfidenceTier = ConfidenceTier::LowConfidenceJudgement;
@@ -97,8 +97,11 @@ pub const RULES: &[Rule] = &[
         // out, because their false-positive cost on human prose outweighs the
         // signal. honest/honestly/honesty left the list on 2026-11-01: no
         // cited source names them.
+        // 'testament' narrowed to 'testament to' on 2026-11-21: the bare word
+        // fired Tier-1 High on 'Old Testament' and 'last will and testament';
+        // the measured marker is the idiom, not the bare noun.
         patterns: &[
-            r"\b(delve(?:s|d)?|delving|leverage|leverages|leveraging|leveraged|robust|seamless|seamlessly|comprehensive|cutting-edge|transformative|groundbreaking|innovative|holistic|testament|tapestry|vibrant|showcase(?:s|d)?|showcasing|boast(?:s|ed)?|boasting|pivotal|garner(?:s|ed)?|garnering|encompass(?:es|ed)?|encompassing|commendable|invaluable|adept|bolster(?:s|ed)?|bolstering|unravel(?:s|led|ed)?|unravelling|spearhead(?:s|ed|ing)?|utilize|utilise|utilizes|utilises|harness(?:es|ing|ed)?|unlock(?:s|ing|ed)?|unleash(?:es|ing|ed)?|streamline(?:s|d)?|streamlining|empower(?:s|ing|ed|ment)?|elevate(?:s|d)?|elevating|paradigm|unprecedented|synergy|synergies|foster(?:s|ing|ed)?|underscore(?:s|d)?|underscoring|game-changing|enterprise-scale|enterprise-grade|extraordinary)\b",
+            r"\b(delve(?:s|d)?|delving|leverage|leverages|leveraging|leveraged|robust|seamless|seamlessly|comprehensive|cutting-edge|transformative|groundbreaking|innovative|holistic|testament\s+to|tapestry|vibrant|showcase(?:s|d)?|showcasing|boast(?:s|ed)?|boasting|pivotal|garner(?:s|ed)?|garnering|encompass(?:es|ed)?|encompassing|commendable|invaluable|adept|bolster(?:s|ed)?|bolstering|unravel(?:s|led|ed)?|unravelling|spearhead(?:s|ed|ing)?|utilize|utilise|utilizes|utilises|harness(?:es|ing|ed)?|unlock(?:s|ing|ed)?|unleash(?:es|ing|ed)?|streamline(?:s|d)?|streamlining|empower(?:s|ing|ed|ment)?|elevate(?:s|d)?|elevating|paradigm|unprecedented|synergy|synergies|foster(?:s|ing|ed)?|underscore(?:s|d)?|underscoring|game-changing|enterprise-scale|enterprise-grade|extraordinary)\b",
         ],
         dynamic: None,
         cased: false,

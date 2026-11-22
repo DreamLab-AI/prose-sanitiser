@@ -59,11 +59,11 @@ pub use prose_sanitiser_core::Severity;
 /// evidence, not an API. Bump it in the same commit as any change to [`RULES`],
 /// [`TIER2`], [`TRANSITIONS`] or the structural thresholds, and add a
 /// [`CHANGELOG`] entry saying what moved and on what evidence.
-pub const RULESET_VERSION: &str = "2026.11.11";
+pub const RULESET_VERSION: &str = "2026.11.21";
 
 /// The date the tables were last checked against their sources; the CHANGELOG
 /// entry of the same date records the scope of that check.
-pub const RULESET_REVIEWED: &str = "2026-11-11";
+pub const RULESET_REVIEWED: &str = "2026-11-21";
 
 /// One entry in the ruleset history.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -78,6 +78,14 @@ pub struct ChangelogEntry {
 
 /// What changed between ruleset versions, newest first.
 pub const CHANGELOG: &[ChangelogEntry] = &[
+    ChangelogEntry {
+        version: "2026.11.21",
+        date: "2026-11-21",
+        notes: &[
+            "tier1-vocab: 'testament' now matches only the idiom 'testament to'. The bare word fired High-severity Tier-1 findings on ordinary prose - 'Old Testament', 'New Testament', 'last will and testament' - and none of those is the construction the excess-frequency sources measured, which is 'a testament to'. Every measured occurrence stays reported; the scripture and legal false positives go.",
+            "First change under ADR-003 (docs/adr/ADR-003-rule-table-changes-ship-with-version-bump.md), filed in this change as the operator approval of 2026-11-16 asked: the table edit, this entry, the version bump and the review-date refresh ship together. Scope: one alternation narrowed; no rule added or removed (the table stays at 15), no severity, tier, threshold or density budget changed, no other pattern moved. Every rule's reviewed date moves with the bump, as the table's single review date requires; the structural measures and the aggregate rules keep their 2026-09-03 review dates.",
+        ],
+    },
     ChangelogEntry {
         version: "2026.11.11",
         date: "2026-11-11",

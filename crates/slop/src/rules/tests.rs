@@ -193,3 +193,30 @@ fn the_ruleset_version_is_date_shaped() {
         .chars()
         .all(|c| c.is_ascii_digit()));
 }
+
+#[test]
+fn testament_matches_only_the_idiom() {
+    // Narrowed on 2026-11-21: the bare word fired Tier-1 High on 'Old
+    // Testament' and 'last will and testament', none of which is the
+    // excess-frequency marker the sources measured.
+    let rule = RULES
+        .iter()
+        .find(|rule| rule.id == "tier1-vocab")
+        .expect("tier1-vocab is in the table");
+    let pattern = regex::Regex::new(&format!("(?i){}", rule.pattern_sources()[0])).unwrap();
+    for text in [
+        "a testament to his craft",
+        "stands as a testament to the team's discipline",
+        "It is a testament to careful work.",
+    ] {
+        assert!(pattern.is_match(text), "{text} should match");
+    }
+    for text in [
+        "Old Testament",
+        "New Testament",
+        "last will and testament",
+        "the Testament of Solomon",
+    ] {
+        assert!(!pattern.is_match(text), "{text} should not match");
+    }
+}
