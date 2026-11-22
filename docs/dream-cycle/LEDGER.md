@@ -29,3 +29,6 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-17 | uk-english | VETOED: adverb between copula and bare sense pair forced verb reading; copula… | NONE | NONE | yes | BLOCKED-ENV |  | c0afcc0bf09f |  |  |  |
 | 2026-11-18 | media-provenance | VETOED: WebP strip now drops non-image chunks that carry C2PA markers (was… | NONE | VETOED | yes | REJECT |  | 21f1b6ddfcdd |  |  |  |
 | 2026-11-19 | cli-and-server | audit text report now names unreadable files on an [error] line per file | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/21 | yes | ACCEPT |  | 523cc8f56e77 |  |  |  |
+| 2026-11-20 | unicode-surgery | stego dropped lone CANCEL TAG (U+E007F); now a tag_block payload; flags kept | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/22 | yes | ACCEPT |  | 5374ef8db99a |  |  |  |
+| 2026-11-21 | slop-rules | tier1 testament matches only 'testament to'; ADR-003 filed; ruleset 2026.11.21 | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/23 | yes | ACCEPT |  | 92542dad6b79 |  |  |  |
+| 2026-11-22 | uk-english | VETOED: do-pseudocleft bare sense pair reads as verb; do-support keeps noun | NONE | VETOED | yes | REJECT |  | 1958eb4b60a7 |  |  |  |

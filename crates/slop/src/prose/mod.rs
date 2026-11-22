@@ -148,34 +148,199 @@ fn compile_rules(floor: Severity) -> Vec<CompiledRule> {
         .collect()
 }
 
+/// The largest file the scanner will read, in bytes.
+///
+/// The prose scanner is `std::fs`-backed (it reads the files it is pointed at),
+/// so it bounds what it reads: a larger file is reported as a [`ScanError`], not
+/// read into memory and not silently skipped.
+pub const MAX_FILE_BYTES: u64 = 32 * 1024 * 1024;
+
+/// A file or directory the scan could not read.
+///
+/// An unreadable input must never look like a clean scan (COV-A-F4): these are
+/// collected in [`ScanResult::errors`] and a caller is expected to surface them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScanError {
+    /// The path, as given to or found by the scan.
+    pub file: String,
+    /// Why it could not be read.
+    pub message: String,
+}
+
+impl std::fmt::Display for ScanError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(formatter, "{}: {}", self.file, self.message)
+    }
+}
+
+impl std::error::Error for ScanError {}
+
+/// Read one file's bytes, bounded by [`MAX_FILE_BYTES`].
+///
+/// Shared with the design scanner so both apply the same cap and report a read
+/// failure the same way.
+pub(crate) fn read_file_bytes(path: &Path) -> Result<Vec<u8>, ScanError> {
+    use std::io::Read;
+    let fail = |message: String| ScanError {
+        file: path.display().to_string(),
+        message,
+    };
+    // Opening a FIFO with no writer blocks forever, so look before opening.
+    // `metadata` follows symlinks, so a link to a regular file is still read.
+    if let Ok(meta) = std::fs::metadata(path) {
+        if !meta.is_file() {
+            return Err(fail("not a regular file, not read".to_string()));
+        }
+    }
+    let file = std::fs::File::open(path).map_err(|error| fail(format!("cannot read: {error}")))?;
+    let mut raw = Vec::new();
+    // One byte past the cap tells "exactly at the cap" from "over it" without
+    // trusting a length that can change between a stat and the read.
+    file.take(MAX_FILE_BYTES + 1)
+        .read_to_end(&mut raw)
+        .map_err(|error| fail(format!("cannot read: {error}")))?;
+    if raw.len() as u64 > MAX_FILE_BYTES {
+        return Err(fail(format!(
+            "larger than the {} MiB scan limit",
+            MAX_FILE_BYTES / (1024 * 1024)
+        )));
+    }
+    Ok(raw)
+}
+
+/// Read one file as text, bounded by [`MAX_FILE_BYTES`].
+///
+/// Undecodable bytes are dropped, as Python's `errors="ignore"` did.
+pub fn read_file_text(path: &Path) -> Result<String, ScanError> {
+    read_file_bytes(path).map(|raw| prose_sanitiser_core::surrogate::decode_ignore(&raw))
+}
+
 /// Files the scanner reads: a single file, or every matching file in a tree.
+///
+/// Directories that cannot be listed are skipped; use [`iter_files_checked`] to
+/// learn which.
 pub fn iter_files(root: &Path) -> Vec<PathBuf> {
+    iter_files_checked(root).0
+}
+
+/// [`iter_files`], plus an error for every directory that could not be listed.
+pub fn iter_files_checked(root: &Path) -> (Vec<PathBuf>, Vec<ScanError>) {
+    let walk = iter_files_report(root);
+    (walk.files, walk.errors)
+}
+
+/// What a directory walk found, and what it could not or would not do.
+pub struct FileWalk {
+    /// The files to scan, in a deterministic order.
+    pub files: Vec<PathBuf>,
+    /// Directories or entries that could not be read.
+    pub errors: Vec<ScanError>,
+    /// Entries skipped on purpose: symlinked directories and non-regular files.
+    pub notices: Vec<ScanError>,
+}
+
+/// Unwrap one `read_dir` item, recording its error against `dir` when it failed.
+fn entry_or_error(
+    dir: &Path,
+    entry: std::io::Result<std::fs::DirEntry>,
+    errors: &mut Vec<ScanError>,
+) -> Option<std::fs::DirEntry> {
+    match entry {
+        Ok(entry) => Some(entry),
+        Err(error) => {
+            errors.push(ScanError {
+                file: dir.display().to_string(),
+                message: format!("cannot read directory entry: {error}"),
+            });
+            None
+        }
+    }
+}
+
+/// Walk `root`, reporting read failures as errors and deliberate skips as notices.
+///
+/// Symlinked directories are never followed (so a loop or a link out of the tree
+/// cannot widen the scan) but each is reported. Symlinked files are scanned.
+/// A non-regular file with a scanned extension (a FIFO, socket or device) is
+/// reported and never opened: opening a FIFO with no writer blocks forever.
+pub fn iter_files_report(root: &Path) -> FileWalk {
     if root.is_file() {
-        return vec![root.to_path_buf()];
+        return FileWalk {
+            files: vec![root.to_path_buf()],
+            errors: Vec::new(),
+            notices: Vec::new(),
+        };
     }
     let mut out = Vec::new();
+    let mut errors = Vec::new();
+    let mut notices = Vec::new();
     let mut stack = vec![root.to_path_buf()];
     while let Some(dir) = stack.pop() {
-        let Ok(entries) = std::fs::read_dir(&dir) else {
-            continue;
+        let entries = match std::fs::read_dir(&dir) {
+            Ok(entries) => entries,
+            Err(error) => {
+                errors.push(ScanError {
+                    file: dir.display().to_string(),
+                    message: format!("cannot list directory: {error}"),
+                });
+                continue;
+            }
         };
         let mut dirs = Vec::new();
         let mut files = Vec::new();
-        for entry in entries.flatten() {
+        for entry in entries {
+            let Some(entry) = entry_or_error(&dir, entry, &mut errors) else {
+                continue;
+            };
             let path = entry.path();
             let name = entry.file_name().to_string_lossy().into_owned();
-            if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+            let file_type = match entry.file_type() {
+                Ok(file_type) => file_type,
+                Err(error) => {
+                    errors.push(ScanError {
+                        file: path.display().to_string(),
+                        message: format!("cannot inspect: {error}"),
+                    });
+                    continue;
+                }
+            };
+            let wanted = path
+                .extension()
+                .map(|ext| EXTS.contains(&ext.to_string_lossy().to_lowercase().as_str()))
+                .unwrap_or(false);
+            if file_type.is_dir() {
                 if !SKIP_DIRS.contains(&name.as_str()) {
                     dirs.push(path);
                 }
-            } else {
-                let extension = path
-                    .extension()
-                    .map(|ext| ext.to_string_lossy().to_lowercase())
-                    .unwrap_or_default();
-                if EXTS.contains(&extension.as_str()) {
+            } else if file_type.is_symlink() {
+                // `metadata` follows the link; a dangling link falls through to
+                // the read, which reports it.
+                match std::fs::metadata(&path) {
+                    Ok(meta) if meta.is_dir() => {
+                        if !SKIP_DIRS.contains(&name.as_str()) {
+                            notices.push(ScanError {
+                                file: path.display().to_string(),
+                                message: "symlinked directory not followed".to_string(),
+                            });
+                        }
+                    }
+                    Ok(meta) if !meta.is_file() => {
+                        if wanted {
+                            notices.push(not_regular(&path));
+                        }
+                    }
+                    _ => {
+                        if wanted {
+                            files.push((name, path));
+                        }
+                    }
+                }
+            } else if file_type.is_file() {
+                if wanted {
                     files.push((name, path));
                 }
+            } else if wanted {
+                notices.push(not_regular(&path));
             }
         }
         files.sort_by(|a, b| a.0.cmp(&b.0));
@@ -185,7 +350,18 @@ pub fn iter_files(root: &Path) -> Vec<PathBuf> {
             stack.push(dir);
         }
     }
-    out
+    FileWalk {
+        files: out,
+        errors,
+        notices,
+    }
+}
+
+fn not_regular(path: &Path) -> ScanError {
+    ScanError {
+        file: path.display().to_string(),
+        message: "not a regular file, skipped without opening".to_string(),
+    }
 }
 
 fn is_list_line(line: &str) -> bool {
@@ -249,13 +425,37 @@ fn snippet_around(text: &str, start: usize, end: usize, limit: usize) -> String 
 }
 
 /// Scan one file, returning its per-line and whole-file findings.
+///
+/// A file that cannot be read yields no findings here, which a caller cannot
+/// tell from a clean file. Prefer [`try_scan_file`], which reports the failure.
 pub fn scan_file(path: &Path, rules: &[CompiledRule], floor: Severity) -> Vec<Finding> {
-    let Ok(raw) = std::fs::read(path) else {
-        return Vec::new();
-    };
-    // Python opened with errors="ignore", which drops undecodable bytes.
-    let text = prose_sanitiser_core::surrogate::decode_ignore(&raw);
-    let file = path.display().to_string();
+    try_scan_file(path, rules, floor).unwrap_or_default()
+}
+
+/// Scan one file, reporting a read failure (including a file over
+/// [`MAX_FILE_BYTES`]) as an error instead of an empty result.
+pub fn try_scan_file(
+    path: &Path,
+    rules: &[CompiledRule],
+    floor: Severity,
+) -> Result<Vec<Finding>, ScanError> {
+    let text = read_file_text(path)?;
+    Ok(scan_document(
+        &path.display().to_string(),
+        &text,
+        rules,
+        floor,
+    ))
+}
+
+/// Scan already-read `text`, attributing findings to `file`.
+pub fn scan_document(
+    file: &str,
+    text: &str,
+    rules: &[CompiledRule],
+    floor: Severity,
+) -> Vec<Finding> {
+    let file = file.to_string();
 
     let transitions = Regex::new(&format!(r"(?i)\b({})\b", TRANSITIONS.join("|")))
         .expect("static regex compiles");
@@ -267,7 +467,7 @@ pub fn scan_file(path: &Path, rules: &[CompiledRule], floor: Severity) -> Vec<Fi
     // one line. Their findings are indexed by line and emitted at the position
     // the `us-spelling` marker holds in the table, so the report keeps its
     // long-standing rule order.
-    let uk_by_line = uk_findings_by_line(&text, floor);
+    let uk_by_line = uk_findings_by_line(text, floor);
 
     let mut findings = Vec::new();
     let mut in_fence = false;
@@ -538,6 +738,18 @@ pub struct ScanResult {
     pub files_scanned: usize,
     /// Per-file structural measures, empty unless the scan asked for them.
     pub structural: Vec<(String, StructuralMetrics)>,
+    /// Files or directories that could not be read, or were over
+    /// [`MAX_FILE_BYTES`]. Non-empty means the scan is incomplete: a clean result
+    /// with errors is not a clean result.
+    pub errors: Vec<ScanError>,
+    /// Things the scan deliberately did not do, so a partial tree is visible:
+    /// symlinked directories (never followed, to rule out loops and escapes) and
+    /// non-regular files such as a FIFO or device named `*.md` (never opened).
+    ///
+    /// Not errors: nothing was unreadable, and the exit-code contract reserves
+    /// exit code 2 for input that could not be read. They are reported on stderr and
+    /// in the JSON `notices` key, and leave the exit code alone.
+    pub notices: Vec<ScanError>,
 }
 
 impl ScanResult {
@@ -598,17 +810,23 @@ pub fn scan_with(root: &Path, floor: Severity, structural: bool) -> ScanResult {
     let rules = compile_rules(floor);
     let mut findings = Vec::new();
     let mut measures = Vec::new();
-    let files = iter_files(root);
+    let walk = iter_files_report(root);
+    let (files, mut errors, notices) = (walk.files, walk.errors, walk.notices);
+    let mut scanned = 0;
     for path in &files {
-        findings.extend(scan_file(path, &rules, floor));
+        let text = match read_file_text(path) {
+            Ok(text) => text,
+            Err(error) => {
+                errors.push(error);
+                continue;
+            }
+        };
+        scanned += 1;
+        let file = path.display().to_string();
+        findings.extend(scan_document(&file, &text, &rules, floor));
         if !structural {
             continue;
         }
-        let Ok(raw) = std::fs::read(path) else {
-            continue;
-        };
-        let text = prose_sanitiser_core::surrogate::decode_ignore(&raw);
-        let file = path.display().to_string();
         let metrics = StructuralMetrics::measure(&text);
         for finding in metrics.findings() {
             if finding.severity.rank() > floor.rank() {
@@ -632,8 +850,10 @@ pub fn scan_with(root: &Path, floor: Severity, structural: bool) -> ScanResult {
     }
     ScanResult {
         findings,
-        files_scanned: files.len(),
+        files_scanned: scanned,
         structural: measures,
+        errors,
+        notices,
     }
 }
 

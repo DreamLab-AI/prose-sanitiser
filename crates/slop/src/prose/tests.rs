@@ -387,3 +387,184 @@ fn one_phrase_fires_one_rule_for_the_to_put_it_family() {
     assert!(ids.contains(&"claudish-structure".to_string()));
     assert!(!ids.contains(&"preamble-label".to_string()));
 }
+
+#[test]
+fn a_missing_file_is_an_error_not_a_clean_scan() {
+    // COV-A-F4: an unreadable file used to return no findings.
+    let dir = tempfile::tempdir().unwrap();
+    let missing = dir.path().join("gone.md");
+    let rules = compile_rules(Severity::Low);
+    let error = try_scan_file(&missing, &rules, Severity::Low).unwrap_err();
+    assert!(error.file.ends_with("gone.md"), "{error}");
+    assert!(error.message.contains("cannot read"), "{error}");
+    assert!(scan_file(&missing, &rules, Severity::Low).is_empty());
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_file_in_a_tree_is_reported_and_not_counted_as_scanned() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let locked = dir.path().join("locked.md");
+    std::fs::write(&locked, "We leverage a robust approach.\n").unwrap();
+    std::fs::write(dir.path().join("fine.md"), "It rained.\n").unwrap();
+    std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+    if std::fs::File::open(&locked).is_ok() {
+        // Running as root: permissions do not bite, so there is nothing to test.
+        return;
+    }
+    let result = scan(dir.path(), Severity::Low);
+    assert_eq!(result.files_scanned, 1);
+    assert_eq!(result.errors.len(), 1, "{:?}", result.errors);
+    assert!(result.errors[0].file.ends_with("locked.md"));
+    assert!(result.findings.is_empty());
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unlistable_directory_is_reported() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let sub = dir.path().join("sub");
+    std::fs::create_dir(&sub).unwrap();
+    std::fs::write(sub.join("a.md"), "It rained.\n").unwrap();
+    std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o000)).unwrap();
+    if std::fs::read_dir(&sub).is_ok() {
+        std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o755)).unwrap();
+        return;
+    }
+    let result = scan(dir.path(), Severity::Low);
+    std::fs::set_permissions(&sub, std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert_eq!(result.errors.len(), 1, "{:?}", result.errors);
+    assert!(result.errors[0].message.contains("cannot list directory"));
+}
+
+#[test]
+fn a_file_over_the_size_cap_is_an_error_not_read() {
+    // COV-A-F3: the scanner reads files, so it bounds them.
+    let dir = tempfile::tempdir().unwrap();
+    let big = dir.path().join("big.md");
+    let file = std::fs::File::create(&big).unwrap();
+    file.set_len(MAX_FILE_BYTES + 1).unwrap();
+    let error = read_file_text(&big).unwrap_err();
+    assert!(error.message.contains("scan limit"), "{error}");
+    let result = scan(&big, Severity::Low);
+    assert_eq!(result.files_scanned, 0);
+    assert_eq!(result.errors.len(), 1);
+
+    // Exactly at the cap is read.
+    let edge = dir.path().join("edge.md");
+    std::fs::File::create(&edge)
+        .unwrap()
+        .set_len(MAX_FILE_BYTES)
+        .unwrap();
+    assert!(read_file_text(&edge).is_ok());
+}
+
+#[test]
+fn a_readable_scan_reports_no_errors() {
+    let result = scan_text("A short note about hills.\n", Severity::Low);
+    assert!(result.errors.is_empty());
+    assert_eq!(result.files_scanned, 1);
+}
+
+#[cfg(unix)]
+#[test]
+fn a_symlinked_directory_is_not_followed_and_is_reported_as_a_notice() {
+    let dir = tempfile::tempdir().unwrap();
+    let real = dir.path().join("real");
+    std::fs::create_dir(&real).unwrap();
+    std::fs::write(real.join("a.md"), "It rained.\n").unwrap();
+    let scanned = dir.path().join("scanned");
+    std::fs::create_dir(&scanned).unwrap();
+    std::fs::write(scanned.join("b.md"), "It rained.\n").unwrap();
+    std::os::unix::fs::symlink(&real, scanned.join("linked")).unwrap();
+    // A loop back to the root must neither hang nor recurse.
+    std::os::unix::fs::symlink(&scanned, scanned.join("loop")).unwrap();
+
+    let result = scan(&scanned, Severity::Low);
+    assert_eq!(result.files_scanned, 1, "only b.md: links are not followed");
+    assert!(result.errors.is_empty(), "{:?}", result.errors);
+    assert_eq!(result.notices.len(), 2, "{:?}", result.notices);
+    assert!(result
+        .notices
+        .iter()
+        .all(|n| n.message.contains("symlinked directory")));
+    assert!(result.notices.iter().any(|n| n.file.ends_with("linked")));
+    assert!(result.notices.iter().any(|n| n.file.ends_with("loop")));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_symlinked_file_is_still_scanned() {
+    let dir = tempfile::tempdir().unwrap();
+    let target = dir.path().join("target.md");
+    std::fs::write(&target, "It rained.\n").unwrap();
+    let tree = dir.path().join("tree");
+    std::fs::create_dir(&tree).unwrap();
+    std::os::unix::fs::symlink(&target, tree.join("link.md")).unwrap();
+    let result = scan(&tree, Severity::Low);
+    assert_eq!(result.files_scanned, 1);
+    assert!(result.notices.is_empty());
+}
+
+#[cfg(unix)]
+fn make_fifo(path: &Path) {
+    let status = std::process::Command::new("mkfifo")
+        .arg(path)
+        .status()
+        .expect("mkfifo is available");
+    assert!(status.success());
+}
+
+#[cfg(unix)]
+#[test]
+fn a_fifo_named_markdown_is_skipped_with_a_notice_and_never_opened() {
+    let dir = tempfile::tempdir().unwrap();
+    make_fifo(&dir.path().join("pipe.md"));
+    std::fs::write(dir.path().join("fine.md"), "It rained.\n").unwrap();
+    // Opening a FIFO with no writer blocks forever, so a regression hangs this
+    // test rather than failing it; run the scan on a thread with a deadline.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let root = dir.path().to_path_buf();
+    std::thread::spawn(move || {
+        let _ = sender.send(scan(&root, Severity::Low));
+    });
+    let result = receiver
+        .recv_timeout(std::time::Duration::from_secs(10))
+        .expect("the scan must not open the FIFO");
+    assert_eq!(result.files_scanned, 1);
+    assert!(result.errors.is_empty(), "{:?}", result.errors);
+    assert_eq!(result.notices.len(), 1, "{:?}", result.notices);
+    assert!(result.notices[0].file.ends_with("pipe.md"));
+    assert!(result.notices[0].message.contains("not a regular file"));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_fifo_given_directly_is_refused_without_being_opened() {
+    let dir = tempfile::tempdir().unwrap();
+    let fifo = dir.path().join("pipe.md");
+    make_fifo(&fifo);
+    let error = read_file_text(&fifo).unwrap_err();
+    assert!(error.message.contains("not a regular file"), "{error}");
+}
+
+#[cfg(unix)]
+#[test]
+fn an_entry_that_cannot_be_inspected_is_an_error_not_a_silent_skip() {
+    // `read_dir` entries report their own errors; they must reach the result.
+    let mut errors = Vec::new();
+    let entry: std::io::Result<std::fs::DirEntry> =
+        Err(std::io::Error::from_raw_os_error(5 /* EIO */));
+    assert!(entry_or_error(Path::new("/some/dir"), entry, &mut errors).is_none());
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].file, "/some/dir");
+    assert!(errors[0].message.contains("cannot read directory entry"));
+}
+
+#[test]
+fn a_clean_tree_has_no_notices() {
+    let result = scan_text("A short note about hills.\n", Severity::Low);
+    assert!(result.notices.is_empty());
+}

@@ -7,6 +7,56 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-11-21
+
+### Security
+
+- **Every server route compares the bearer key in
+  constant time** (`subtle::ConstantTimeEq`) instead of `==` (COV-A-F7). The key
+  stays optional, as documented: unset means no auth, for a loopback bind.
+- **`is_global` refuses NAT64, 6to4, Teredo and IPv4-compatible addresses that
+  carry a non-public IPv4 address** (COV-A-F8). `64:ff9b::/96` and `2002::/16`
+  are public only when the embedded IPv4 is; `64:ff9b:1::/48` and `2001::/32`
+  are refused outright. IPv4-mapped handling is unchanged.
+- **The harness scripts directory no longer falls back to
+  `skills/prose-sanitiser` in the working directory** (COV-A-F5). Set
+  `PROSE_SANITISER_SCRIPTS_DIR` for a development checkout.
+
+- **`is_global` also refuses** all of `0.0.0.0/8`, ISATAP identifiers
+  (`::0:5efe:a.b.c.d`, `::200:5efe:a.b.c.d`, under any prefix) whose IPv4 is
+  non-public, the IPv4-translated block `::ffff:0:0:0/96`, site-local
+  `fec0::/10`, documentation `3fff::/20`, and `2001::/23` except the IANA
+  globally reachable sub-allocations.
+- **The server requires `Content-Type: application/json`** on `/inspect` and
+  `/clean` (`415`), and, on a loopback bind with no key, validates `Host`
+  (`421`), closing cross-origin `text/plain` posts and DNS rebinding. The key
+  stays optional. `ServerState` gains `bind`.
+- **A relative `*_DIR` override is ignored** (`PROSE_SANITISER_SCRIPTS_DIR`,
+  `REVERSE_SYNTHID_DIR`, `NOAI_WATERMARK_DIR`, `MARKDIFFUSION_DIR`,
+  `MARKLLM_DIR`): it would resolve against the working directory. Absolute and
+  `~/` values are honoured. `core::env_dir` is the helper.
+
+### Fixed
+
+- **`slop-detect` surfaces read failures and applies the 32 MiB cap**, as
+  `slop-scan` does: stderr, an `errors` array in `--json`, exit 2.
+  `design::scan_checked`, `try_scan_file` and `walk_checked` report; `scan`,
+  `scan_file` and `walk` stay lossy.
+- **`slop-scan` reports what it skipped.** A `read_dir` entry error is a scan
+  error (exit 2). Symlinked directories (not followed) and non-regular files
+  named `*.md` (never opened) are `ScanResult::notices`, shown on stderr and as
+  a `notices` array in `--json`; they do not change the exit code, because the
+  contract reserves 2 for unreadable input and nothing here was unreadable.
+- **An unreadable file or directory no longer reads as a clean scan**
+  (COV-A-F4). `prose::ScanResult` gains `errors`; `prose::try_scan_file` and
+  `prose::iter_files_checked` report failures; `slop-scan` prints them on stderr,
+  adds an `errors` array to `--json`, and exits 2. A file over
+  `prose::MAX_FILE_BYTES` (32 MiB) is an error, not read (COV-A-F3).
+  `scan_file` and `iter_files` keep their signatures and are lossy; prefer the
+  checked forms. `ScanResult.files_scanned` now counts files actually read.
+- **Docs**: the server module lists `GET /rules`; the media crate says c2pa 0.91
+  (COV-A-F10).
+
 ## [0.1.6] - 2026-11-11
 
 ### Security

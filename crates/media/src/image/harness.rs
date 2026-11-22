@@ -17,22 +17,36 @@ use serde_json::{json, Value};
 
 use crate::proc::which;
 use crate::proc::{run_capture, Rlimits, RunError};
-use prose_sanitiser_core::{env_nonempty, py_str_float as format_float};
+use prose_sanitiser_core::{env_dir, env_nonempty, py_str_float as format_float};
+
+/// The image path the harness scripts are baked at.
+const BAKED_SCRIPTS_DIR: &str = "/opt/agentbox/skills/prose-sanitiser";
 
 /// Where the Python harness scripts live.
 ///
 /// The Rust binaries sit outside the skill, so the location is configuration
-/// rather than `__file__`: an explicit override first, then the baked image
-/// path, then a repo-relative path for a development checkout.
+/// rather than `__file__`: an explicit `PROSE_SANITISER_SCRIPTS_DIR` first, then
+/// the baked image path. There is no working-directory fallback (COV-A-F5): the
+/// scripts are executed with the harness interpreter, so a `skills/` directory
+/// in whichever directory the tool is run from must never be picked up. A
+/// development checkout sets `PROSE_SANITISER_SCRIPTS_DIR`. When neither exists
+/// the baked path is returned anyway, so the "script not found" error names an
+/// absolute location. A relative override is ignored, as every `*_DIR`
+/// override is, because it would resolve against the working directory.
 pub fn scripts_dir() -> PathBuf {
-    if let Some(dir) = env_nonempty("PROSE_SANITISER_SCRIPTS_DIR") {
-        return PathBuf::from(dir);
+    scripts_dir_from(
+        env_dir("PROSE_SANITISER_SCRIPTS_DIR"),
+        Path::new(BAKED_SCRIPTS_DIR),
+    )
+}
+
+/// [`scripts_dir`] with the inputs made explicit, so the order is testable
+/// without touching the process environment or the image.
+fn scripts_dir_from(override_dir: Option<String>, baked: &Path) -> PathBuf {
+    match override_dir {
+        Some(dir) => PathBuf::from(dir),
+        None => baked.to_path_buf(),
     }
-    let baked = PathBuf::from("/opt/agentbox/skills/prose-sanitiser");
-    if baked.is_dir() {
-        return baked;
-    }
-    PathBuf::from("skills/prose-sanitiser")
 }
 
 /// The interpreter to run a harness with, when no checkout venv applies.
@@ -108,7 +122,7 @@ fn parse_payload(
 pub fn run_synthid_score(path: &Path, upstream_dir: Option<&str>) -> Option<Value> {
     let upstream = upstream_dir
         .map(str::to_string)
-        .or_else(|| env_nonempty("REVERSE_SYNTHID_DIR"))?;
+        .or_else(|| env_dir("REVERSE_SYNTHID_DIR"))?;
     if upstream.is_empty() {
         return None;
     }
@@ -195,7 +209,7 @@ pub fn run_ctrlregen_clean(path: &Path, output: &Path, options: &CtrlRegenOption
     let Some(upstream_dir) = options
         .upstream_dir
         .clone()
-        .or_else(|| env_nonempty("NOAI_WATERMARK_DIR"))
+        .or_else(|| env_dir("NOAI_WATERMARK_DIR"))
     else {
         return json!({
             "available": false,
@@ -296,7 +310,7 @@ pub fn run_markdiffusion_purify(
     let upstream_dir = options
         .upstream_dir
         .clone()
-        .or_else(|| env_nonempty("MARKDIFFUSION_DIR"));
+        .or_else(|| env_dir("MARKDIFFUSION_DIR"));
     let upstream = upstream_dir.as_deref().map(resolve_dir);
     if let Some(upstream) = &upstream {
         if !upstream.is_dir() {
@@ -369,8 +383,12 @@ pub fn run_markdiffusion_purify(
 mod tests {
     use super::*;
 
+    /// Tests that set process-wide `*_DIR` variables take this lock.
+    static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn an_unconfigured_scorer_yields_no_score() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("x.png");
         std::fs::write(&file, b"x").unwrap();
@@ -421,10 +439,56 @@ mod tests {
     }
 
     #[test]
+    fn the_scripts_dir_never_falls_back_to_the_working_directory() {
+        // COV-A-F5: with no override the answer is the absolute baked path,
+        // whether or not it exists, never `skills/prose-sanitiser`.
+        let baked = Path::new("/nonexistent/baked/prose-sanitiser");
+        assert_eq!(scripts_dir_from(None, baked), baked);
+        assert!(scripts_dir_from(None, Path::new(BAKED_SCRIPTS_DIR)).is_absolute());
+        assert_eq!(
+            scripts_dir_from(Some("/opt/h".to_string()), baked),
+            PathBuf::from("/opt/h")
+        );
+    }
+
+    #[test]
     fn the_scripts_dir_honours_an_explicit_override() {
-        // The override wins over both the baked and repo-relative fallbacks.
+        // The override wins over the baked path.
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::set_var("PROSE_SANITISER_SCRIPTS_DIR", "/tmp/harnesses");
         assert_eq!(scripts_dir(), PathBuf::from("/tmp/harnesses"));
         std::env::remove_var("PROSE_SANITISER_SCRIPTS_DIR");
+    }
+
+    #[test]
+    fn a_relative_scripts_dir_override_is_ignored() {
+        // One test owns the variable's relative cases, so it cannot race the
+        // override test above on a process-wide environment variable: both set
+        // it, so they take the lock.
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        for relative in ["skills/prose-sanitiser", "./scripts", "../x"] {
+            std::env::set_var("PROSE_SANITISER_SCRIPTS_DIR", relative);
+            assert_eq!(
+                scripts_dir(),
+                PathBuf::from(BAKED_SCRIPTS_DIR),
+                "{relative} must not be honoured"
+            );
+        }
+        std::env::remove_var("PROSE_SANITISER_SCRIPTS_DIR");
+    }
+
+    #[test]
+    fn relative_upstream_overrides_are_ignored() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("x.png");
+        std::fs::write(&file, b"x").unwrap();
+        std::env::set_var("REVERSE_SYNTHID_DIR", "relative/synthid");
+        assert!(run_synthid_score(&file, None).is_none());
+        std::env::remove_var("REVERSE_SYNTHID_DIR");
+        std::env::set_var("NOAI_WATERMARK_DIR", "relative/ctrlregen");
+        let result = run_ctrlregen_clean(&file, &file, &CtrlRegenOptions::default());
+        std::env::remove_var("NOAI_WATERMARK_DIR");
+        assert!(result["error"].as_str().unwrap().contains("not configured"));
     }
 }

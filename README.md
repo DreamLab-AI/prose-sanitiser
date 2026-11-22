@@ -258,7 +258,8 @@ covered by the fixture suite or the numbers above should still be treated as
 provisional; deferred items are listed at the end of the review records.
 
 Crates `core`, `unicode`, `uk` and `slop` are publication candidates:
-pure Rust, no C dependencies, no subprocesses, no network, every public item
+pure Rust, no C dependencies, no subprocesses, no network (`slop` reads the
+files it scans, capped at 32 MiB each, and reports any it cannot read), every public item
 documented, `cargo doc --no-deps` clean. `media` pulls a heavier dependency tree
 and is published with the CLI as a second wave. `server` is internal.
 

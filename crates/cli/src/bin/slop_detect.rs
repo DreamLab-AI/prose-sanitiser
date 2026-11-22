@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use prose_sanitiser::common::{run_cli, to_pretty_json_ascii, CliError};
 use prose_sanitiser::exit;
-use prose_sanitiser::slop::design::{by_rule, by_rule_ranked, scan, RuleFilter, Severity};
+use prose_sanitiser::slop::design::{by_rule, by_rule_ranked, scan_checked, RuleFilter, Severity};
 use serde_json::{json, Map, Value};
 
 const RESET: &str = "\x1b[0m";
@@ -68,24 +68,56 @@ fn body() -> Result<i32, CliError> {
             format!("path not found: {}", missing.display()),
         ));
     }
-    let shown = scan(&args.paths, &filter, floor);
+    let result = scan_checked(&args.paths, &filter, floor);
+    let shown = result.findings;
+    // An unreadable or oversized file means the scan is incomplete: say so on
+    // stderr and exit with the tool-error code, never as a clean result.
+    for error in &result.errors {
+        eprintln!("slop-detect: {error}");
+    }
+    let code = |findings: usize| {
+        if result.errors.is_empty() {
+            exit::from_findings(findings)
+        } else {
+            exit::ERROR
+        }
+    };
 
     if args.json {
         let mut counts = Map::new();
         for (rule, count) in by_rule(&shown) {
             counts.insert(rule, json!(count));
         }
-        println!(
-            "{}",
-            to_pretty_json_ascii(&json!({
-                "findings": shown.iter().map(|f| f.to_json()).collect::<Vec<_>>(),
-                "count": shown.len(),
-                "by_rule": Value::Object(counts),
-            }))
+        let mut payload = Map::new();
+        payload.insert(
+            "findings".into(),
+            json!(shown.iter().map(|f| f.to_json()).collect::<Vec<_>>()),
         );
-        return Ok(exit::from_findings(shown.len()));
+        payload.insert("count".into(), json!(shown.len()));
+        payload.insert("by_rule".into(), Value::Object(counts));
+        // Additive: absent when every file was read, so a complete scan's
+        // document is unchanged.
+        if !result.errors.is_empty() {
+            payload.insert(
+                "errors".into(),
+                json!(result
+                    .errors
+                    .iter()
+                    .map(|error| json!({"file": error.file, "message": error.message}))
+                    .collect::<Vec<_>>()),
+            );
+        }
+        println!("{}", to_pretty_json_ascii(&Value::Object(payload)));
+        return Ok(code(shown.len()));
     }
 
+    if shown.is_empty() && !result.errors.is_empty() {
+        println!(
+            "scan incomplete: {} file(s) or director(ies) could not be read (see stderr).",
+            result.errors.len()
+        );
+        return Ok(exit::ERROR);
+    }
     if shown.is_empty() {
         println!(
             "clean — no deterministic slop signals at or above '{}'.",
@@ -138,5 +170,5 @@ fn body() -> Result<i32, CliError> {
     }
     println!("\nThese are deterministic CLI-layer signals only. Apply the browser- and");
     println!("LLM-only layers from references/slop-rules-catalog.md by judgment.");
-    Ok(exit::from_findings(shown.len()))
+    Ok(code(shown.len()))
 }

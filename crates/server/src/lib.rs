@@ -6,10 +6,33 @@
 //! key. Intended for a trusted network; put it behind a reverse proxy if it is
 //! reachable from untrusted clients.
 //!
+//! # Browser-origin hardening
+//!
+//! A web page open in a browser on the same machine can reach a loopback
+//! service, so two checks run whether or not a key is set:
+//!
+//! - **`Content-Type: application/json` is required** on `POST /inspect` and
+//!   `POST /clean`; anything else, or no header, is `415`. A page can send
+//!   `text/plain` (or form types) cross-origin *without* a CORS preflight, and
+//!   the body would otherwise be parsed as JSON regardless. The service sends no
+//!   CORS headers and answers no preflight, so a real `application/json`
+//!   request from another origin is blocked by the browser before it is sent.
+//! - **The `Host` header is validated** against the bound address when the
+//!   service is bound to loopback and no bearer key is set; a mismatch is
+//!   `421 Misdirected Request`, on every route. DNS rebinding makes an
+//!   attacker's hostname resolve to `127.0.0.1`, which makes the page
+//!   same-origin and lets it read replies; it cannot make the browser send a
+//!   different `Host`. Accepted: `localhost`, `127.0.0.1`, `[::1]` and the bound
+//!   IP literal, each bare or with the bound port. Not enforced when a key is
+//!   set (a rebound page cannot present it, and a reverse proxy may forward its
+//!   own `Host`) or when bound to a non-loopback address (the names that reach a
+//!   network deployment are not knowable from here).
+//!
 //! Routes:
 //! - `GET  /health`       -> `{"ok": true, "version": ...}`
 //! - `GET  /capabilities` -> which optional tools / pixel backends are present
 //! - `GET  /openapi.json` -> the generated OpenAPI 3.0.3 spec
+//! - `GET  /rules`        -> the stylistic rule table: ids, tiers, dates, sources and the ruleset changelog
 //! - `POST /inspect`      -> `{"file": <base64>, "name": "x.png"}` -> findings
 //! - `POST /clean`        -> `{"file": ..., "options": {...}}` -> cleaned bytes
 
@@ -17,21 +40,25 @@
 
 pub mod openapi;
 
+use std::net::{IpAddr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
 use axum::body::Bytes;
+use axum::extract::Request;
 use axum::extract::{DefaultBodyLimit, State};
 use axum::http::{HeaderMap, StatusCode};
+use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::Router;
 use base64::Engine;
 use serde_json::{json, Map, Value};
+use subtle::ConstantTimeEq;
 
 use prose_sanitiser::common::io::max_input_bytes;
 use prose_sanitiser::common::surrogate;
-use prose_sanitiser::common::{env_nonempty, looks_binary, to_pretty_json, which};
+use prose_sanitiser::common::{env_dir, env_nonempty, looks_binary, to_pretty_json, which};
 use prose_sanitiser::container::{clean_container, inspect_container};
 use prose_sanitiser::dispatch::{classify_bytes, Kind};
 use prose_sanitiser::image::{clean_image, inspect_image, CleanImageOptions, PixelRemover};
@@ -75,12 +102,16 @@ pub fn max_body_bytes() -> usize {
     cap + (cap >> 1)
 }
 
-/// Runtime state: the bearer token, when one is configured.
+/// Runtime state: the bearer token, when one is configured, and the bound address.
 #[derive(Clone, Default)]
 pub struct ServerState {
     /// The bearer token every request must present, or `None` when the
     /// service is running unauthenticated on a loopback bind.
     pub api_key: Option<String>,
+    /// The address the listener is actually bound to (`local_addr()`, not the
+    /// requested name). Drives `Host` validation; `None` is treated as a
+    /// loopback bind on an unknown port, the strictest reading.
+    pub bind: Option<SocketAddr>,
 }
 
 /// The rule table behind every stylistic finding: version, dates and tiers.
@@ -150,11 +181,11 @@ pub fn capabilities() -> Value {
             "qpdf": which("qpdf").is_some(),
         },
         "pixel_backends": {
-            "ctrlregen": env_nonempty("NOAI_WATERMARK_DIR").is_some(),
-            "diffusion": env_nonempty("MARKDIFFUSION_DIR").is_some(),
+            "ctrlregen": env_dir("NOAI_WATERMARK_DIR").is_some(),
+            "diffusion": env_dir("MARKDIFFUSION_DIR").is_some(),
         },
-        "scorers": {"synthid": env_nonempty("REVERSE_SYNTHID_DIR").is_some()},
-        "harnesses": {"markllm": env_nonempty("MARKLLM_DIR").is_some()},
+        "scorers": {"synthid": env_dir("REVERSE_SYNTHID_DIR").is_some()},
+        "harnesses": {"markllm": env_dir("MARKLLM_DIR").is_some()},
         "ruleset": ruleset(),
     })
 }
@@ -182,11 +213,96 @@ fn authorised(state: &ServerState, headers: &HeaderMap) -> bool {
     let Some(key) = &state.api_key else {
         return true;
     };
+    let expected = format!("Bearer {key}");
+    // Constant-time comparison (COV-A-F7): `==` on strings stops at the first
+    // differing byte, which leaks how much of a guessed key was right. `subtle`
+    // still returns early when the lengths differ, so the length of the key is
+    // not hidden; its value is.
     headers
         .get("authorization")
-        .and_then(|value| value.to_str().ok())
-        .map(|value| value == format!("Bearer {key}"))
+        .map(|value| bool::from(value.as_bytes().ct_eq(expected.as_bytes())))
         .unwrap_or(false)
+}
+
+/// Split a `Host` header into its name (lowercased, brackets kept for IPv6, no
+/// trailing dot) and optional port. `None` when it is malformed.
+fn split_host(value: &str) -> Option<(String, Option<u16>)> {
+    let (name, port) = if value.starts_with('[') {
+        let end = value.find(']')?;
+        let rest = &value[end + 1..];
+        let port = match rest {
+            "" => None,
+            _ => Some(rest.strip_prefix(':')?),
+        };
+        (&value[..=end], port)
+    } else {
+        match value.rsplit_once(':') {
+            Some((name, port)) => (name, Some(port)),
+            None => (value, None),
+        }
+    };
+    let port = match port {
+        None => None,
+        Some(text) => Some(text.parse::<u16>().ok()?),
+    };
+    let name = name.trim_end_matches('.').to_ascii_lowercase();
+    if name.is_empty() {
+        return None;
+    }
+    Some((name, port))
+}
+
+/// Whether the request's `Host` header is acceptable for this server.
+///
+/// Only enforced for a loopback bind with no bearer key; see the crate docs.
+fn host_allowed(state: &ServerState, headers: &HeaderMap) -> bool {
+    if state.api_key.is_some() {
+        return true;
+    }
+    let bound_ip = state.bind.map(|addr| addr.ip());
+    if matches!(bound_ip, Some(ip) if !ip.is_loopback()) {
+        return true;
+    }
+    let Some((name, port)) = headers
+        .get("host")
+        .and_then(|value| value.to_str().ok())
+        .and_then(split_host)
+    else {
+        return false;
+    };
+    if let (Some(port), Some(bound)) = (port, state.bind) {
+        if port != bound.port() {
+            return false;
+        }
+    }
+    let literal = |ip: IpAddr| match ip {
+        IpAddr::V4(v4) => v4.to_string(),
+        IpAddr::V6(v6) => format!("[{v6}]"),
+    };
+    matches!(name.as_str(), "localhost" | "127.0.0.1" | "[::1]")
+        || bound_ip.is_some_and(|ip| literal(ip) == name)
+}
+
+/// Reject a request whose `Host` is not one this server answers to (`421`).
+async fn host_guard(
+    State(state): State<Arc<ServerState>>,
+    request: Request,
+    next: Next,
+) -> Response {
+    if !host_allowed(&state, request.headers()) {
+        return error(StatusCode::MISDIRECTED_REQUEST, "unrecognised Host header");
+    }
+    next.run(request).await
+}
+
+/// Whether the request declares a JSON body. Parameters such as `charset` are
+/// allowed; the media type is compared case-insensitively and exactly.
+fn is_json_content_type(headers: &HeaderMap) -> bool {
+    headers
+        .get("content-type")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.split(';').next())
+        .is_some_and(|media| media.trim().eq_ignore_ascii_case("application/json"))
 }
 
 /// Reduce a client-supplied filename to a bare basename safe for temp use.
@@ -302,7 +418,15 @@ async fn openapi_route(State(state): State<Arc<ServerState>>, headers: HeaderMap
 // The Err variant is a whole axum Response; boxing it would buy nothing
 // here, since the caller returns it immediately.
 #[allow(clippy::result_large_err)]
-fn read_json(body: &Bytes) -> Result<Value, Response> {
+fn read_json(headers: &HeaderMap, body: &Bytes) -> Result<Value, Response> {
+    // Before anything is parsed: a cross-origin page can send `text/plain`
+    // without a preflight, so the body is refused unless it says it is JSON.
+    if !is_json_content_type(headers) {
+        return Err(error(
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+            "Content-Type must be application/json",
+        ));
+    }
     if body.len() > max_body_bytes() {
         return Err(error(StatusCode::PAYLOAD_TOO_LARGE, "invalid request body"));
     }
@@ -320,7 +444,7 @@ async fn inspect_route(
     if !authorised(&state, &headers) {
         return error(StatusCode::UNAUTHORIZED, "unauthorized");
     }
-    let body = match read_json(&body) {
+    let body = match read_json(&headers, &body) {
         Ok(body) => body,
         Err(response) => return response,
     };
@@ -346,7 +470,7 @@ async fn clean_route(
     if !authorised(&state, &headers) {
         return error(StatusCode::UNAUTHORIZED, "unauthorized");
     }
-    let body = match read_json(&body) {
+    let body = match read_json(&headers, &body) {
         Ok(body) => body,
         Err(response) => return response,
     };
@@ -597,6 +721,7 @@ fn merge_kind(kind: &str, result: Value) -> Value {
 
 /// Build the router.
 pub fn app(state: ServerState) -> Router {
+    let state = Arc::new(state);
     Router::new()
         .route("/health", get(health))
         .route("/capabilities", get(capabilities_route))
@@ -606,7 +731,8 @@ pub fn app(state: ServerState) -> Router {
         .route("/clean", post(clean_route))
         .fallback(not_found)
         .layer(DefaultBodyLimit::max(max_body_bytes()))
-        .with_state(Arc::new(state))
+        .layer(middleware::from_fn_with_state(state.clone(), host_guard))
+        .with_state(state)
 }
 
 #[cfg(test)]
