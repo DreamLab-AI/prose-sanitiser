@@ -140,14 +140,22 @@ pub fn inspect_webp(data: &[u8]) -> (bool, bool, Vec<String>) {
 }
 
 /// Decide whether one chunk is dropped, returning its metadata flag bit.
+///
+/// EXIF and XMP are provenance containers, so a marker in either removes the
+/// chunk even without a full strip. An ICC profile is colour-management data
+/// that [`inspect_webp`] never opens, so a marker inside its bytes is a
+/// payload collision rather than a manifest: PNG pins the same rule for iCCP
+/// (`structural_chunks_are_never_dropped_for_a_payload_collision`), and an
+/// ICCP chunk goes only under an explicit full-metadata strip.
 fn drop_flag(chunk: &RiffChunk, strip_all_metadata: bool, combined: &[&[u8]]) -> Option<u8> {
     let fourcc = chunk.id();
-    if let Some((_, flag)) = METADATA_FLAGS
+    if let Some((candidate, flag)) = METADATA_FLAGS
         .iter()
         .find(|(candidate, _)| *candidate == fourcc)
     {
         let payload = chunk.content().data().cloned().unwrap_or_default();
-        let drop = strip_all_metadata || !contains_any(&payload, combined).is_empty();
+        let drop = strip_all_metadata
+            || (*candidate != b"ICCP" && !contains_any(&payload, combined).is_empty());
         return drop.then_some(*flag);
     }
     (fourcc.to_ascii_uppercase() == *b"C2PA").then_some(0)
@@ -330,6 +338,39 @@ mod tests {
             vec!["no WebP metadata chunks removed (already clean or none matched)".to_string()]
         );
         assert_eq!(cleaned, webp, "a clean file comes back byte-identical");
+    }
+
+    #[test]
+    fn an_iccp_chunk_survives_a_marker_collision() {
+        // PNG pins that an iCCP profile whose bytes happen to contain "c2pa"
+        // is never dropped for the collision, and the WebP ICCP chunk is the
+        // same colour-management data: inspect_webp never opens it, so a
+        // marker inside it is a collision, not provenance. A targeted strip
+        // must keep it; only an explicit full strip may remove it.
+        let webp = webp_with(0x20, &[(b"ICCP", b"prof\x00\x00c2pa-colliding-bytes")]);
+
+        // Detection is not weakened: the colliding bytes still hit the
+        // whole-file C2PA scan, exactly as they would inside a PNG iCCP.
+        let (c2pa, _, findings) = inspect_webp(&webp);
+        assert!(c2pa);
+        assert!(findings
+            .iter()
+            .any(|f| f.starts_with("byte-scan C2PA markers: ")));
+
+        let (cleaned, actions) = strip_webp(&webp, false).unwrap();
+        assert_eq!(
+            actions,
+            vec!["no WebP metadata chunks removed (already clean or none matched)".to_string()]
+        );
+        assert_eq!(cleaned, webp, "nothing matched, so the file is unchanged");
+
+        let (cleaned, actions) = strip_webp(&webp, true).unwrap();
+        assert!(actions.contains(&"drop WebP chunk ICCP".to_string()));
+        assert!(!cleaned.windows(4).any(|w| w == b"ICCP"));
+        let (chunks, notes) = webp_chunks(&cleaned);
+        assert!(notes.is_empty(), "rewritten RIFF size must be consistent");
+        assert_eq!(chunks.len(), 2); // VP8X + VP8
+        assert_eq!(chunks[0].payload[0] & 0x20, 0, "the ICCP flag is cleared");
     }
 
     #[test]
