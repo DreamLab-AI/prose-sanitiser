@@ -5,9 +5,17 @@
 //! to an unvalidated host behind the loopback allowlist. Any 3xx therefore
 //! surfaces as an error rather than a second request.
 
+use std::io::Read;
 use std::time::Duration;
 
 use serde_json::{json, Map, Value};
+
+/// Hard cap on one rewrite response body, 64 MiB.
+///
+/// Not configurable, matching the sitemap decompression cap: this is the
+/// runaway-endpoint guard, not a tuning knob. A rewrite response larger than
+/// any document the tool accepts is not a rewrite.
+const MAX_RESPONSE_BYTES: usize = 64 << 20;
 
 /// POST JSON, refusing redirects so an API key cannot be forwarded onward.
 fn http_json(
@@ -33,9 +41,23 @@ fn http_json(
         request = request.set(name, value);
     }
     match request.send_json(payload.clone()) {
-        Ok(response) => response
-            .into_json::<Value>()
-            .map_err(|error| format!("bad JSON response: {error}")),
+        Ok(response) => {
+            // `into_json` reads the body to EOF, so a runaway endpoint could
+            // grow this process without limit. Read one byte past the cap so
+            // an over-large response is detectable rather than truncated,
+            // the same guard the sitemap reader uses.
+            let mut body = Vec::new();
+            response
+                .into_reader()
+                .take(MAX_RESPONSE_BYTES as u64 + 1)
+                .read_to_end(&mut body)
+                .map_err(|error| format!("response read failed: {error}"))?;
+            if body.len() > MAX_RESPONSE_BYTES {
+                return Err(format!("rewrite response exceeds {MAX_RESPONSE_BYTES} bytes"));
+            }
+            serde_json::from_slice::<Value>(&body)
+                .map_err(|error| format!("bad JSON response: {error}"))
+        }
         Err(ureq::Error::Status(status, _)) => Err(format!("HTTP {status}")),
         Err(error) => Err(error.to_string()),
     }
