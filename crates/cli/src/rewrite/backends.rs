@@ -53,7 +53,9 @@ fn http_json(
                 .read_to_end(&mut body)
                 .map_err(|error| format!("response read failed: {error}"))?;
             if body.len() > MAX_RESPONSE_BYTES {
-                return Err(format!("rewrite response exceeds {MAX_RESPONSE_BYTES} bytes"));
+                return Err(format!(
+                    "rewrite response exceeds {MAX_RESPONSE_BYTES} bytes"
+                ));
             }
             serde_json::from_slice::<Value>(&body)
                 .map_err(|error| format!("bad JSON response: {error}"))
