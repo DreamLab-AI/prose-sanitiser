@@ -296,3 +296,23 @@ fn human_report_renders_hits_and_notes() {
     assert!(text.contains("[zwj_family/probable] U+200B ZERO WIDTH SPACE (Cf) x1 @ [1]"));
     assert!(text.contains("Note: Layer A only:"));
 }
+
+#[test]
+fn an_ideographic_variation_sequence_survives_but_a_chain_does_not() {
+    // A registered IVS is one ideograph plus exactly one E-block selector;
+    // the pair picks the glyph, so a default clean keeps it.
+    let ivs = "\u{845B}\u{E0100}";
+    assert!(crate::stego::scan(&units(ivs)).is_empty());
+    assert_eq!(cleaned(ivs, CleanOptions::default()), ivs);
+
+    // Two selectors after the same ideograph are a smuggled payload, not an
+    // IVS, and must not survive on the strength of the keep above.
+    let mut chain = String::from("\u{845B}");
+    for byte in b"hi" {
+        chain.push(crate::stego::byte_to_variation_selector(*byte));
+    }
+    assert_eq!(crate::stego::scan(&units(&chain)).len(), 1);
+    assert_eq!(cleaned(&chain, CleanOptions::default()), "\u{845B}");
+    let (output, _) = clean_text(&units(&chain), CleanOptions::default());
+    assert!(crate::stego::scan(&output).is_empty());
+}
