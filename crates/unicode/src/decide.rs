@@ -331,6 +331,16 @@ pub fn decide(
         {
             return keep;
         }
+        // An ideographic variation sequence keeps its selector: the pair is
+        // registered as a unit, and stripping the selector silently changes
+        // the glyph the ideograph renders with. Two or more selectors after
+        // the same base are a smuggled payload, and the payload pass strips
+        // that run regardless of this keep.
+        if (0xE0100..=0xE01EF).contains(&codepoint)
+            && previous_kept.map(is_cjk_ideographic).unwrap_or(false)
+        {
+            return keep;
+        }
         // U+3164 and U+FFA0 are kept only after a jamo of their own
         // presentation form, so partial-syllable text is not corrupted.
         if tables::is_blank_filler_in_context(codepoint, previous_codepoint) {
@@ -380,6 +390,17 @@ pub fn decide(
         };
     }
     keep
+}
+
+/// Whether `unit` is a CJK ideograph in the extension-A, unified or
+/// compatibility ideograph blocks, any of which can head an ideographic
+/// variation sequence.
+fn is_cjk_ideographic(unit: Unit) -> bool {
+    let Some(character) = unit.as_char() else {
+        return false;
+    };
+    let codepoint = character as u32;
+    (0x3400..=0x9FFF).contains(&codepoint) || (0xF900..=0xFAFF).contains(&codepoint)
 }
 
 /// `U+XXXX NAME (Cc)` — the Python `_char_label`.
@@ -501,6 +522,25 @@ mod tests {
             decide_char('\u{1160}', Some('\u{1100}')).action,
             Action::Keep
         );
+    }
+
+    #[test]
+    fn keeps_an_ideographic_variation_selector_after_an_ideograph() {
+        assert_eq!(
+            decide_char('\u{E0100}', Some('\u{845B}')).action,
+            Action::Keep
+        );
+        assert_eq!(decide_char('\u{E0100}', Some('a')).action, Action::Strip);
+        // Paranoid mode still strips the selector: it is load-bearing for
+        // the glyph, which is exactly what paranoid mode distrusts.
+        let decision = decide(
+            Unit::Char('\u{E0100}'),
+            Some(Unit::Char('\u{845B}')),
+            true,
+            false,
+            true,
+        );
+        assert_eq!(decision.action, Action::Strip);
     }
 
     #[test]
