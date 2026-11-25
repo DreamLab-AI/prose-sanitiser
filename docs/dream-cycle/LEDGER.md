@@ -34,3 +34,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-22 | uk-english | VETOED: do-pseudocleft bare sense pair reads as verb; do-support keeps noun | NONE | VETOED | yes | REJECT |  | 1958eb4b60a7 |  |  |  |
 | 2026-11-23 | media-provenance | WebP ICCP kept on marker collision (PNG iCCP rule); full strip still drops it | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/25 | yes | ACCEPT |  | c2eb278699d8 |  |  |  |
 | 2026-11-24 | cli-and-server | rewrite responses capped at 64 MiB; into_json read bodies to EOF uncapped | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/26 | yes | ACCEPT |  | ce330b260414 |  |  |  |
+| 2026-11-25 | unicode-surgery | clean keeps one E-block VS after a CJK ideograph (IVS); chains stay contraband | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/27 | yes | ACCEPT |  | 7e8f46647bf0 |  |  |  |
