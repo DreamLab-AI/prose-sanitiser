@@ -148,3 +148,37 @@ fn an_empty_document_yields_nothing() {
         .check("", &Config::new())
         .is_empty());
 }
+
+#[test]
+fn a_sub_250_word_document_reports_nothing_structural() {
+    // The same em-dash-heavy unit as `structural_measures_are_off_unless_asked_for`
+    // above, plus serial commas, at under a quarter of the length: the
+    // 250-word floor keeps every density finding silent.
+    let dashes = "A — B — C — D. ".repeat(18);
+    let commas = "E, F, and G. ".repeat(6);
+    let document = format!("{dashes}{commas}\n");
+    let findings = SlopChecker::new()
+        .with_structural(true)
+        .check(&document, &Config::new());
+    assert!(ids(&findings)
+        .iter()
+        .all(|id| !id.starts_with("structural-")));
+}
+
+#[test]
+fn short_documents_with_one_parallelism_or_one_tricolon_report_nothing_structural() {
+    // One 'not just X, but Y' and one list of three, each alone in a short
+    // document: both constructions sit behind the same 250-word floor as
+    // the density findings.
+    let parallelism = "This is not just a plan, but a vision for the town.\n";
+    let tricolon = "The committee listed the roads, the bridges, and the ferries.\n";
+    let checker = SlopChecker::new().with_structural(true);
+    let parallelism_findings = checker.check(parallelism, &Config::new());
+    assert!(ids(&parallelism_findings)
+        .iter()
+        .all(|id| !id.starts_with("structural-")));
+    let tricolon_findings = checker.check(tricolon, &Config::new());
+    assert!(ids(&tricolon_findings)
+        .iter()
+        .all(|id| !id.starts_with("structural-")));
+}
