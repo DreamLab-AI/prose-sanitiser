@@ -160,7 +160,9 @@ fn a_sub_250_word_document_reports_nothing_structural() {
     let findings = SlopChecker::new()
         .with_structural(true)
         .check(&document, &Config::new());
-    assert!(ids(&findings).iter().all(|id| !id.starts_with("structural-")));
+    assert!(ids(&findings)
+        .iter()
+        .all(|id| !id.starts_with("structural-")));
 }
 
 #[test]
@@ -172,7 +174,11 @@ fn short_documents_with_one_parallelism_or_one_tricolon_report_nothing_structura
     let tricolon = "The committee listed the roads, the bridges, and the ferries.\n";
     let checker = SlopChecker::new().with_structural(true);
     let parallelism_findings = checker.check(parallelism, &Config::new());
-    assert!(ids(&parallelism_findings).iter().all(|id| !id.starts_with("structural-")));
+    assert!(ids(&parallelism_findings)
+        .iter()
+        .all(|id| !id.starts_with("structural-")));
     let tricolon_findings = checker.check(tricolon, &Config::new());
-    assert!(ids(&tricolon_findings).iter().all(|id| !id.starts_with("structural-")));
+    assert!(ids(&tricolon_findings)
+        .iter()
+        .all(|id| !id.starts_with("structural-")));
 }
