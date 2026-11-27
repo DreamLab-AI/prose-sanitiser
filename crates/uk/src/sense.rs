@@ -80,7 +80,9 @@ const VERB_MARKERS: &[&str] = &[
 ];
 
 /// Copulas and the auxiliaries *have*, *has* and *had*: a bare sense pair
-/// directly after one is a noun.
+/// directly after one is a noun, unless the clause before a form of *be*
+/// ends in a form of *do*: that is a do-pseudocleft, and the pair is its
+/// bare infinitive, a verb (see BE_COPULAS).
 ///
 /// The verb readings of these pairs are inflected (practising, licensed) and
 /// have table entries of their own, so the uninflected form that follows a
@@ -93,6 +95,21 @@ const VERB_MARKERS: &[&str] = &[
 const COPULAS: &[&str] = &[
     "am", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
 ];
+
+/// The copulas proper: every form of *be*.
+///
+/// A do-pseudocleft (*all he does is practise*, *what she did was practise*)
+/// is the one construction in which the bare pair after a copula is a verb:
+/// the clause before the copula ends in a form of *do*, and the pair after
+/// it is that clause's bare infinitive. The trigger is deliberately be-only:
+/// after *have*, *has* or *had* a preceding do-form merely emphasises the
+/// auxiliary (*the team does have practice*), and the pair is the noun
+/// object of that auxiliary, so the noun reading stands there.
+const BE_COPULAS: &[&str] = &["am", "is", "are", "was", "were", "be", "been", "being"];
+
+/// The forms of *do* that can close the clause before a copula in a
+/// do-pseudocleft.
+const DO_FORMS: &[&str] = &["do", "does", "did", "doing", "done"];
 
 /// Prepositions that make the following word a noun.
 const PREPOSITIONS: &[&str] = &[
@@ -210,6 +227,50 @@ const POS_WINDOW: usize = 3;
 /// assert_eq!(verdict, Verdict::CorrectAsWritten);
 ///
 /// let document = "The choir has practice at dawn.";
+/// let start = document.find("practice").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
+/// assert_eq!(verdict, Verdict::CorrectAsWritten);
+/// ```
+///
+/// A do-pseudocleft is the exception. When the clause before a form of *be*
+/// ends in a form of *do* (*all he does is*, *what she did was*), the bare
+/// pair after the copula is that clause's bare infinitive, so it is the
+/// verb and takes the verb's spelling.
+///
+/// ```
+/// use prose_sanitiser_uk::sense::{resolve, Verdict};
+/// use prose_sanitiser_uk::table::{self, Dialect};
+/// use prose_sanitiser_core::Span;
+///
+/// let document = "All he does is practice.";
+/// let start = document.find("practice").unwrap();
+/// let entry = table::lookup("practice").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
+/// assert!(matches!(verdict, Verdict::Suggest { target: "practise", .. }));
+///
+/// let document = "What she did was practice.";
+/// let start = document.find("practice").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
+/// assert!(matches!(verdict, Verdict::Suggest { target: "practise", .. }));
+/// ```
+///
+/// The trigger is be-only and needs the do-form. A plain copula keeps the
+/// noun reading, and a do-form in front of *have*, *has* or *had* merely
+/// emphasises the auxiliary, so the pair stays that auxiliary's noun
+/// object.
+///
+/// ```
+/// use prose_sanitiser_uk::sense::{resolve, Verdict};
+/// use prose_sanitiser_uk::table::{self, Dialect};
+/// use prose_sanitiser_core::Span;
+///
+/// let document = "His job is practice.";
+/// let start = document.find("practice").unwrap();
+/// let entry = table::lookup("practice").unwrap();
+/// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
+/// assert_eq!(verdict, Verdict::CorrectAsWritten);
+///
+/// let document = "The team does have practice on Tuesdays.";
 /// let start = document.find("practice").unwrap();
 /// let verdict = resolve(document, Span::new(start, start + 8), entry, Dialect::Ise);
 /// assert_eq!(verdict, Verdict::CorrectAsWritten);
@@ -348,7 +409,9 @@ fn detect_pos(document: &str, span: Span) -> Option<Pos> {
         .collect();
     let before: Vec<&str> = preceding.iter().rev().take(POS_WINDOW).copied().collect();
 
-    if let Some(reading) = before.first().and_then(|word| immediate_reading(word)) {
+    // The whole reversed window goes in: the do-pseudocleft exception needs
+    // the token in front of a copula, not only the copula itself.
+    if let Some(reading) = immediate_reading(&before) {
         return Some(reading);
     }
 
@@ -381,18 +444,30 @@ fn detect_pos(document: &str, span: Span) -> Option<Pos> {
     }
 }
 
-/// What the word directly before the occurrence settles, if anything.
+/// What the words directly before the occurrence settle, if anything.
 ///
 /// Five outcomes, in order. A copula makes it a noun, because a bare sense
 /// pair directly after a copula is a predicate nominative rather than a
-/// verb; a verb marker or an adverb makes it a verb; a determiner or a
+/// verb, unless the clause before a form of *be* ends in a form of *do*:
+/// that is a do-pseudocleft, and the pair is its bare infinitive, a verb.
+/// A verb marker or an adverb makes it a verb; a determiner or a
 /// preposition makes it a noun; a conjunction settles nothing and defers to
-/// the wider window; anything else is a content word, which in this position
-/// is an adjective or a noun modifier, and either way the occurrence heads
-/// the phrase.
-fn immediate_reading(word: &str) -> Option<Pos> {
+/// the wider window; anything else is a content word, which in this
+/// position is an adjective or a noun modifier, and either way the
+/// occurrence heads the phrase.
+fn immediate_reading(before: &[&str]) -> Option<Pos> {
+    let word = *before.first()?;
     let lower = word.to_lowercase();
     if COPULAS.contains(&lower.as_str()) {
+        // A do-pseudocleft ("all he does is practice") ends the clause
+        // before the copula in a form of do, and the bare pair after it is
+        // that clause's bare infinitive, so it is the verb. The trigger is
+        // be-only: after have, has or had a do-form merely emphasises the
+        // auxiliary ("the team does have practice"), and the pair is the
+        // auxiliary's noun object.
+        if BE_COPULAS.contains(&lower.as_str()) && ends_in_do_form(before.get(1).copied()) {
+            return Some(Pos::Verb);
+        }
         return Some(Pos::Noun);
     }
     if VERB_MARKERS.contains(&lower.as_str()) || ADVERB_MARKERS.contains(&lower.as_str()) {
@@ -405,6 +480,12 @@ fn immediate_reading(word: &str) -> Option<Pos> {
         return None;
     }
     Some(Pos::Noun)
+}
+
+/// Whether the token in front of a be-copula is a form of *do*, closing
+/// the clause before that copula in a do-pseudocleft.
+fn ends_in_do_form(word: Option<&str>) -> bool {
+    word.is_some_and(|previous| DO_FORMS.contains(&previous.to_lowercase().as_str()))
 }
 
 /// Whether the noun reading is assumed when nothing local decides.
