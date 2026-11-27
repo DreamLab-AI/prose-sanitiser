@@ -36,3 +36,4 @@ One row per night the dream engine runs on this repository (nominated 2026-10-24
 | 2026-11-24 | cli-and-server | rewrite responses capped at 64 MiB; into_json read bodies to EOF uncapped | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/26 | yes | ACCEPT |  | ce330b260414 |  |  |  |
 | 2026-11-25 | unicode-surgery | clean keeps one E-block VS after a CJK ideograph (IVS); chains stay contraband | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/27 | yes | ACCEPT |  | 7e8f46647bf0 |  |  |  |
 | 2026-11-26 | slop-rules | 250-word structural gate test-pinned; sub-250 tell-heavy docs report nothing | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/28 | yes | ACCEPT |  | 4e32f4568c94 |  |  |  |
+| 2026-11-27 | uk-english | be-only do-pseudocleft trigger: bare pair after be+do-form reads as verb | NONE | https://github.com/DreamLab-AI/prose-sanitiser/pull/29 | yes | ACCEPT |  | 35e9e6766acf |  |  |  |
