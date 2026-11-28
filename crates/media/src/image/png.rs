@@ -23,21 +23,8 @@ pub const PNG_SIG: &[u8] = b"\x89PNG\r\n\x1a\n";
 /// per-pixel rendering parameters, the `iCCP`/`tRNS` class, where a marker hit
 /// is a collision on values rather than provenance text.
 const STRUCTURAL_CHUNKS: &[&[u8]] = &[
-    b"IHDR",
-    b"IDAT",
-    b"IEND",
-    b"PLTE",
-    b"tRNS",
-    b"gAMA",
-    b"pHYs",
-    b"sRGB",
-    b"cHRM",
-    b"iCCP",
-    b"acTL",
-    b"fcTL",
-    b"fdAT",
-    b"bKGD",
-    b"sBIT",
+    b"IHDR", b"IDAT", b"IEND", b"PLTE", b"tRNS", b"gAMA", b"pHYs", b"sRGB", b"cHRM", b"iCCP",
+    b"acTL", b"fcTL", b"fdAT", b"bKGD", b"sBIT",
 ];
 
 /// The `iTXt` keyword Adobe uses for an embedded XMP packet, NUL-terminated as
