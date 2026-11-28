@@ -15,8 +15,16 @@ use super::markers::{ai_and_c2pa_markers, contains_any, hits_name_c2pa, join_hit
 pub const PNG_SIG: &[u8] = b"\x89PNG\r\n\x1a\n";
 
 /// Chunks that carry image data or rendering intent and are never dropped.
+///
+/// The APNG chunks belong with `IDAT`: `fdAT` is compressed frame data, whose
+/// bytes can collide with a provenance marker by chance exactly as `IDAT`'s
+/// can, and dropping the chunk would break the animation, the PNG analogue of
+/// the WebP rule that never touches `ANIM` or `ANMF`. `bKGD` and `sBIT` carry
+/// per-pixel rendering parameters, the `iCCP`/`tRNS` class, where a marker hit
+/// is a collision on values rather than provenance text.
 const STRUCTURAL_CHUNKS: &[&[u8]] = &[
     b"IHDR", b"IDAT", b"IEND", b"PLTE", b"tRNS", b"gAMA", b"pHYs", b"sRGB", b"cHRM", b"iCCP",
+    b"acTL", b"fcTL", b"fdAT", b"bKGD", b"sBIT",
 ];
 
 /// The `iTXt` keyword Adobe uses for an embedded XMP packet, NUL-terminated as
@@ -524,5 +532,33 @@ mod tests {
             assert!(budget.inflate(&corrupt).is_none());
         }
         assert!(budget.inflate(&whole).is_none());
+    }
+
+    #[test]
+    fn apng_animation_chunks_survive_a_marker_collision() {
+        // `fdAT` is compressed frame data, the PNG analogue of WebP `ANMF`,
+        // and `acTL`/`fcTL` are its control chunks, the analogue of `ANIM`:
+        // high-entropy compressed bytes can hit a C2PA marker by chance, so
+        // dropping the chunk would silently break the animation.
+        let png = png_with(&[
+            (b"acTL", &[0, 0, 0, 1, 0, 0, 0, 0]),
+            (b"fcTL", b"\x00\x00\x00\x00c2pa-colliding-bytes"),
+            (b"fdAT", b"\x00\x00\x00\x00c2pa-colliding-bytes"),
+        ]);
+        let (cleaned, _) = strip_png(&png, true).unwrap();
+        assert!(cleaned.windows(4).any(|w| w == b"acTL"));
+        assert!(cleaned.windows(4).any(|w| w == b"fcTL"));
+        assert!(cleaned.windows(4).any(|w| w == b"fdAT"));
+    }
+
+    #[test]
+    fn background_and_significant_bits_survive_a_marker_collision() {
+        // `bKGD` and `sBIT` carry per-pixel rendering parameters, the same
+        // class as `iCCP` and `tRNS`: the bytes are values, not text, so a
+        // marker hit is a collision and never provenance.
+        let png = png_with(&[(b"bKGD", b"c2pa\x00\x00"), (b"sBIT", b"c2pa")]);
+        let (cleaned, _) = strip_png(&png, true).unwrap();
+        assert!(cleaned.windows(4).any(|w| w == b"bKGD"));
+        assert!(cleaned.windows(4).any(|w| w == b"sBIT"));
     }
 }
